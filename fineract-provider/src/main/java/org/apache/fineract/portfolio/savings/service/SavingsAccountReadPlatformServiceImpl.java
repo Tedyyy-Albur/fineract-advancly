@@ -33,6 +33,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import jdk.jshell.execution.Util;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.fineract.accounting.common.AccountingRuleType;
@@ -40,10 +42,7 @@ import org.apache.fineract.accounting.glaccount.data.GLAccountData;
 import org.apache.fineract.infrastructure.core.data.EnumOptionData;
 import org.apache.fineract.infrastructure.core.domain.ExternalId;
 import org.apache.fineract.infrastructure.core.domain.JdbcSupport;
-import org.apache.fineract.infrastructure.core.service.DateUtils;
-import org.apache.fineract.infrastructure.core.service.Page;
-import org.apache.fineract.infrastructure.core.service.PaginationHelper;
-import org.apache.fineract.infrastructure.core.service.SearchParameters;
+import org.apache.fineract.infrastructure.core.service.*;
 import org.apache.fineract.infrastructure.core.service.database.DatabaseSpecificSQLGenerator;
 import org.apache.fineract.infrastructure.dataqueries.data.DatatableData;
 import org.apache.fineract.infrastructure.dataqueries.data.EntityTables;
@@ -294,7 +293,7 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
                 new Object[] { maxSavingsId, status, pageSize, yesterday });
         for (SavingsAccountData savingsAccountData : savingsAccountDataList) {
             this.savingAccountAssembler.assembleSavings(savingsAccountData);
-            log.info("  to process {} as {}", savingsAccountData.getAccountNo(), savingsAccountData.getDepositType().getValue());
+            log.debug("  to process {} as {}", savingsAccountData.getAccountNo(), savingsAccountData.getDepositType().getValue());
         }
         return savingsAccountDataList;
     }
@@ -378,7 +377,8 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             sqlBuilder.append(
                     "msac.id as chargeId, msac.amount as chargeAmount, msac.charge_time_enum as chargeTimeType, msac.is_penalty as isPenaltyCharge, ");
             sqlBuilder.append("txd.id as taxDetailsId, txd.amount as taxAmount, ");
-            sqlBuilder.append("apm.gl_account_id as glAccountIdForInterestOnSavings, apm1.gl_account_id as glAccountIdForSavingsControl, ");
+            sqlBuilder.append("apm2.gl_account_id as glAccountIdForInterestReceivableNegative, apm1.gl_account_id as glAccountIdForInterestOnSavings, apm.gl_account_id as glAccountIdForSavingsControl, apm3.gl_account_id as glAccountIdForOverdraftPorfolioNegative, ");
+            sqlBuilder.append("apm4.gl_account_id as glAccountIdForSavingsControlAcountPositiveInterestNegative, apm5.gl_account_id as glAccountIdForInterestReceivablePositiveInterestNegative, ");
             sqlBuilder.append(
                     "mtc.id as taxComponentId, mtc.debit_account_id as debitAccountId, mtc.credit_account_id as creditAccountId, mtc.percentage as taxPercentage ");
             sqlBuilder.append("from m_savings_account sa ");
@@ -394,8 +394,12 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
             sqlBuilder.append("left join m_tax_group tg on tg.id = sa.tax_group_id ");
             sqlBuilder.append("left join m_savings_account_transaction_tax_details txd on txd.savings_transaction_id = tr.id ");
             sqlBuilder.append("left join m_tax_component mtc on mtc.id = txd.tax_component_id ");
-            sqlBuilder.append("left join acc_product_mapping apm on apm.product_id = sp.id and apm.financial_account_type=3 ");
-            sqlBuilder.append("left join acc_product_mapping apm1 on apm1.product_id = sp.id and apm1.financial_account_type=2 ");
+            sqlBuilder.append("left join acc_product_mapping apm on apm.product_id = sp.id and apm.financial_account_type=2 ");
+            sqlBuilder.append("left join acc_product_mapping apm1 on apm1.product_id = sp.id and apm1.financial_account_type=17 ");
+            sqlBuilder.append("left join acc_product_mapping apm2 on apm2.product_id = sp.id and apm2.financial_account_type=18 ");
+            sqlBuilder.append("left join acc_product_mapping apm3 on apm3.product_id = sp.id and apm3.financial_account_type = 11 ");
+            sqlBuilder.append("left join acc_product_mapping apm4 on apm4.product_id = sp.id and apm4.financial_account_type = 2 ");
+            sqlBuilder.append("left join acc_product_mapping apm5 on apm5.product_id = sp.id and apm5.financial_account_type = 18 ");
 
             this.schemaSql = sqlBuilder.toString();
         }
@@ -448,6 +452,13 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
 
                     final Long glAccountIdForInterestOnSavings = rs.getLong("glAccountIdForInterestOnSavings");
                     final Long glAccountIdForSavingsControl = rs.getLong("glAccountIdForSavingsControl");
+
+                    final Long glAccountIdForOverdraftPorfolioNegative = rs.getLong("glAccountIdForOverdraftPorfolioNegative");
+                    final Long glAccountIdForInterestReceivableNegative = rs.getLong("glAccountIdForInterestReceivableNegative");
+
+
+                    final Long glAccountIdForSavingsControlAcountPositiveInterestNegative = rs.getLong("glAccountIdForSavingsControlAcountPositiveInterestNegative");
+                    final Long glAccountIdForInterestReceivablePositiveInterestNegative = rs.getLong("glAccountIdForInterestReceivablePositiveInterestNegative");
 
                     final Long productId = rs.getLong("productId");
                     final String productName = rs.getString("productName");
@@ -606,6 +617,13 @@ public class SavingsAccountReadPlatformServiceImpl implements SavingsAccountRead
                     savingsAccountData.setClientData(clientData);
                     savingsAccountData.setGroupGeneralData(groupGeneralData);
                     savingsAccountData.setSavingsProduct(savingsProductData);
+
+                    savingsAccountData.setGlAccountIdForInterestReceivableNegative(glAccountIdForInterestReceivableNegative);
+                    savingsAccountData.setGlAccountIdForOverdraftPorfolioNegative(glAccountIdForOverdraftPorfolioNegative);
+
+                    savingsAccountData.setGlAccountIdForSavingsControlAcountPositiveInterestNegative(glAccountIdForSavingsControlAcountPositiveInterestNegative);
+                    savingsAccountData.setGlAccountIdForInterestReceivablePositiveInterestNegative(glAccountIdForInterestReceivablePositiveInterestNegative);
+
                     savingsAccountData.setGlAccountIdForInterestOnSavings(glAccountIdForInterestOnSavings);
                     savingsAccountData.setGlAccountIdForSavingsControl(glAccountIdForSavingsControl);
                 }

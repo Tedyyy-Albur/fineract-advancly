@@ -36,16 +36,8 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -594,8 +586,15 @@ public class SavingsAccountWritePlatformServiceJpaRepositoryImpl implements Savi
             if (!backdatedTxnsAllowedTill) {
                 List<SavingsAccountTransactionData> transactions = savingsAccountData.getSavingsAccountTransactionData();
                 for (SavingsAccountTransactionData accountTransaction : transactions) {
-                    if (accountTransaction.getId() == null) {
+                    if (accountTransaction.getId() == null && !MathUtil.isZero(accountTransaction.getAmount())) {
                         savingsAccountData.setNewSavingsAccountTransactionData(accountTransaction);
+
+                        SavingsAccountTransactionType transactionType = SavingsAccountTransactionType.fromInt(Math.toIntExact(accountTransaction.getTransactionType().getId()));
+                        if (transactionType.equals(SavingsAccountTransactionType.INTEREST_POSTING)){
+                            savingsAccountData.setInterestPosting(accountTransaction.getAmount());
+                        }else if(transactionType.equals(SavingsAccountTransactionType.OVERDRAFT_INTEREST)){
+                            savingsAccountData.setOverdraftPosting(accountTransaction.getOverdraftAmount());
+                        }
                     }
                 }
             }

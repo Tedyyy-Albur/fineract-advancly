@@ -38,7 +38,7 @@ public class AccrualBasedAccountingProcessorForSavings implements AccountingProc
     private final AccountingProcessorHelper helper;
 
     @Override
-    public void createJournalEntriesForSavings(final SavingsDTO savingsDTO) {
+    public void createJournalEntriesForSavings(final SavingsDTO savingsDTO, boolean isNegativeBalance) {
         final GLClosure latestGLClosure = this.helper.getLatestClosureByBranch(savingsDTO.getOfficeId());
         final Long savingsProductId = savingsDTO.getSavingsProductId();
         final Long savingsId = savingsDTO.getSavingsId();
@@ -182,10 +182,15 @@ public class AccrualBasedAccountingProcessorForSavings implements AccountingProc
             else if (savingsTransactionDTO.getTransactionType().isAccrual()) {
                 // Post journal entry for Accrual Recognition
                 if (savingsTransactionDTO.getAmount().compareTo(BigDecimal.ZERO) > 0) {
-                    if (feePayments.size() >= 0 || penaltyPayments.size() > 0) {
+                    if (feePayments.size() > 0 || penaltyPayments.size() > 0) {
                         this.helper.createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
                                 AccrualAccountsForSavings.FEES_RECEIVABLE.getValue(), AccrualAccountsForSavings.INCOME_FROM_FEES.getValue(),
                                 savingsProductId, paymentTypeId, savingsId, transactionId, transactionDate, amount, isReversal);
+                    } else if(savingsTransactionDTO.getIsNegativeBalance()){
+                        this.helper.createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
+                                AccrualAccountsForSavings.INTEREST_RECEIVABLE.getValue(),
+                                AccrualAccountsForSavings.INCOME_FROM_INTEREST.getValue(), savingsProductId, paymentTypeId, savingsId,
+                                transactionId, transactionDate, amount, isReversal);
                     } else {
                         this.helper.createCashBasedJournalEntriesAndReversalsForSavings(office, currencyCode,
                                 AccrualAccountsForSavings.INTEREST_ON_SAVINGS.getValue(),

@@ -348,6 +348,7 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
     protected List<InteropIdentifier> identifiers = new ArrayList<>();
 
     public transient ConfigurationDomainService configurationDomainService;
+    public transient SavingsAccountTransaction newTransaction;
 
     protected SavingsAccount() {
         //
@@ -683,7 +684,7 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
             boolean isInterestTransfer, final boolean isSavingsInterestPostingAtCurrentPeriodEnd, final Integer financialYearBeginningMonth,
             final LocalDate postInterestOnDate, final boolean backdatedTxnsAllowedTill, final boolean postReversals) {
 
-        log.info("  calculateInterestUsing: {} {} {}", upToInterestCalculationDate, isInterestTransfer, postInterestOnDate);
+        log.debug("  calculateInterestUsing: {} {} {}", upToInterestCalculationDate, isInterestTransfer, postInterestOnDate);
         // no openingBalance concept supported yet but probably will to allow for migrations.
         // Check global configurations and 'pivot' date is null
         Money openingAccountBalance = backdatedTxnsAllowedTill ? Money.of(this.currency, this.summary.getRunningBalanceOnPivotDate())
@@ -715,14 +716,14 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
             if (postInterestOnDate != null) {
                 postedAsOnDates.add(postInterestOnDate);
             }
-            log.info("  postedAsOnDates: {}", postedAsOnDates.size());
+            log.debug("  postedAsOnDates: {}", postedAsOnDates.size());
             final List<LocalDateInterval> postingPeriodIntervals = this.savingsHelper.determineInterestPostingPeriods(
                     getStartInterestCalculationDate(), upToInterestCalculationDate, postingPeriodType, financialYearBeginningMonth,
                     postedAsOnDates);
-            log.info("  postingPeriodIntervals: {}", postingPeriodIntervals.size());
+            log.debug("  postingPeriodIntervals: {}", postingPeriodIntervals.size());
 
             Money periodStartingBalance;
-            log.info("  startInterestCalculationDate: {}", this.startInterestCalculationDate);
+            log.debug("  startInterestCalculationDate: {}", this.startInterestCalculationDate);
             if (this.startInterestCalculationDate != null && !this.getStartInterestCalculationDate().equals(this.getActivationDate())) {
                 LocalDate startInterestCalculationDate = this.startInterestCalculationDate;
                 SavingsAccountTransaction transaction = null;
@@ -740,7 +741,7 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
             } else {
                 periodStartingBalance = Money.zero(this.currency);
             }
-            log.info("  periodStartingBalance: {}", periodStartingBalance);
+            log.debug("  periodStartingBalance: {}", periodStartingBalance);
 
             final SavingsInterestCalculationType interestCalculationType = SavingsInterestCalculationType
                     .fromInt(this.interestCalculationType);
@@ -751,7 +752,7 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
             final Money minOverdraftForInterestCalculation = Money.of(getCurrency(), this.minOverdraftForInterestCalculation);
 
             for (final LocalDateInterval periodInterval : postingPeriodIntervals) {
-                log.info("  periodInterval: {} {}", periodInterval.startDate(), periodInterval.endDate());
+                log.debug("  periodInterval: {} {}", periodInterval.startDate(), periodInterval.endDate());
 
                 boolean isUserPosting = false;
                 if (postedAsOnDates.contains(periodInterval.endDate().plusDays(1))) {
@@ -876,6 +877,7 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
     protected void recalculateDailyBalances(final Money openingAccountBalance, final LocalDate interestPostingUpToDate,
             final boolean backdatedTxnsAllowedTill, boolean postReversals) {
         Money runningBalance = openingAccountBalance;
+        BigDecimal previewBalance = BigDecimal.ZERO;
         boolean calculateInterest = hasInterestCalculation() || hasOverdraftInterestCalculation();
 
         List<SavingsAccountTransaction> accountTransactionsSorted = null;
@@ -887,8 +889,11 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
         }
 
         boolean isTransactionsModified = false;
-        for (final SavingsAccountTransaction transaction : accountTransactionsSorted) {
+        for (final
+        SavingsAccountTransaction transaction : accountTransactionsSorted) {
+            boolean typeTransaccionValidation = transaction.getTransactionType() == SavingsAccountTransactionType.ACCRUAL;
             if (transaction.isReversed() || transaction.isReversalTransaction()) {
+                transaction.setNegativeBalance(MathUtil.isLessThanZero(transaction.getRunningBalance()));
                 transaction.zeroBalanceFields();
             } else {
                 Money overdraftAmount = Money.zero(this.currency);
@@ -909,6 +914,10 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
                     }
                     transactionAmount = transactionAmount.minus(transaction.getAmount(this.currency));
                 }
+                if (typeTransaccionValidation && this.newTransaction != null  && (transaction.getDateOf().isAfter(this.newTransaction.getDateOf()) || transaction.getDateOf().isEqual(this.newTransaction.getDateOf()))){
+                    transaction.setNegativeBalance(MathUtil.isLessThanZero(transaction.getRunningBalance()));
+                    transaction.reverse();
+                }
 
                 runningBalance = runningBalance.plus(transactionAmount);
                 transaction.setRunningBalance(runningBalance);
@@ -916,7 +925,7 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
                 if (MathUtil.isEmpty(overdraftAmount) && runningBalance.isLessThanZero() && !transaction.isAmountOnHold()) {
                     overdraftAmount = runningBalance.negated();
                 }
-                if (!calculateInterest || transaction.getId() == null) {
+                if (!calculateInterest || transaction.getId() == null || transaction.getOverdraftAmount(this.currency).isZero()) {
                     transaction.setOverdraftAmount(overdraftAmount);
                 } else if (!MathUtil.isEqualTo(overdraftAmount, transaction.getOverdraftAmount(this.currency))) {
                     SavingsAccountTransaction accountTransaction = SavingsAccountTransaction.copyTransaction(transaction);
@@ -997,15 +1006,18 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
             final Long relaxingDaysConfigForPivotDate, final String refNo) {
         final String resourceTypeName = depositAccountType().resourceName();
         if (isNotActive()) {
-            final String defaultUserMessage = "Transaction is not allowed. Account is not active.";
-            final ApiParameterError error = ApiParameterError.parameterError(
-                    "error.msg." + resourceTypeName + ".transaction.account.is.not.active", defaultUserMessage, "transactionDate",
-                    transactionDTO.getTransactionDate().format(transactionDTO.getFormatter()));
+            // TODO: MODIFICAR SI AFECTA EN OTRA OPERACION, SE MODIFICO PARA CERRAR EL  "Recurring Deposits "
+            if (!SavingsAccountStatusType.fromInt(this.status).isMatured()){
+                final String defaultUserMessage = "Transaction is not allowed. Account is not active.";
+                final ApiParameterError error = ApiParameterError.parameterError(
+                        "error.msg." + resourceTypeName + ".transaction.account.is.not.active", defaultUserMessage, "transactionDate",
+                        transactionDTO.getTransactionDate().format(transactionDTO.getFormatter()));
 
-            final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
-            dataValidationErrors.add(error);
+                final List<ApiParameterError> dataValidationErrors = new ArrayList<>();
+                dataValidationErrors.add(error);
 
-            throw new PlatformApiDataValidationException(dataValidationErrors);
+                throw new PlatformApiDataValidationException(dataValidationErrors);
+            }
         }
 
         if (DateUtils.isDateInTheFuture(transactionDTO.getTransactionDate())) {
@@ -1045,6 +1057,8 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
         if (backdatedTxnsAllowedTill) {
             addTransactionToExisting(transaction);
         } else {
+            //AGREGO EL VALOR DE LA TRANSACCION NUEVA QUE SE HARA PARA ELIMINAR IGUAL EL ACCRUAL
+            addTransactionNew(transaction);
             addTransaction(transaction);
         }
 
@@ -1180,6 +1194,8 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
         if (backdatedTxnsAllowedTill) {
             addTransactionToExisting(transaction);
         } else {
+            //AGREGO EL VALOR DE LA TRANSACCION NUEVA QUE SE HARA PARA ELIMINAR IGUAL EL ACCRUAL
+            addTransactionNew(transaction);
             addTransaction(transaction);
         }
 
@@ -2281,7 +2297,6 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
         }
 
         final LocalDate businessDate = DateUtils.getBusinessLocalDate();
-        ;
 
         this.status = SavingsAccountStatusType.APPROVED.getValue();
         actualChanges.put(SavingsApiConstants.statusParamName, SavingsEnumerations.status(this.status));
@@ -2908,6 +2923,9 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
     public void addTransaction(final SavingsAccountTransaction transaction) {
         this.transactions.add(transaction);
     }
+    public void addTransactionNew(final SavingsAccountTransaction transaction) {
+        this.newTransaction = transaction;
+    }
 
     public void addTransactionToExisting(final SavingsAccountTransaction transaction) {
         this.savingsAccountTransactions.add(transaction);
@@ -3251,7 +3269,7 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
         if (isPeriodicAccrualAccounting()) {
             if (isChargeToBeRecognizedAsAccrual(savingsAccountCharge)) {
                 savingsAccountAccrualTransaction = SavingsAccountTransaction.accrual(this, office(), transactionDate,
-                        savingsAccountCharge.getAmount(getCurrency()), false);
+                        savingsAccountCharge.getAmount(getCurrency()), false, false);
             }
         }
         return savingsAccountAccrualTransaction;
@@ -3504,7 +3522,7 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
         if (withholdTransaction == null && this.withHoldTax()) {
             boolean isWithholdTaxAdded = createWithHoldTransaction(totalInterestPosted, interestPostingUpToDate, backdatedTxnsAllowedTill);
             recalucateDailyBalance = recalucateDailyBalance || isWithholdTaxAdded;
-        } else {
+        } else if (withholdTransaction != null){
             boolean isWithholdTaxAdded = updateWithHoldTransaction(totalInterestPosted, withholdTransaction);
             recalucateDailyBalance = recalucateDailyBalance || isWithholdTaxAdded;
         }

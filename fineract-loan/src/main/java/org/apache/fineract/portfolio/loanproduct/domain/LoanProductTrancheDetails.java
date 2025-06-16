@@ -21,8 +21,12 @@ package org.apache.fineract.portfolio.loanproduct.domain;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import java.math.BigDecimal;
+import java.util.Map;
+
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.fineract.infrastructure.core.api.JsonCommand;
+import org.apache.fineract.portfolio.loanproduct.LoanProductConstants;
 
 @Getter
 @Setter
@@ -48,5 +52,30 @@ public class LoanProductTrancheDetails {
         this.maxTrancheCount = maxTrancheCount;
         this.outstandingLoanBalance = outstandingLoanBalance;
     }
+    public void update(final JsonCommand command, final Map<String, Object> actualChanges, final String localeAsInput) {
+        if (command.isChangeInBooleanParameterNamed(LoanProductConstants.MULTI_DISBURSE_LOAN_PARAMETER_NAME, this.multiDisburseLoan)) {
+            final boolean newValue = command.booleanPrimitiveValueOfParameterNamed(LoanProductConstants.MULTI_DISBURSE_LOAN_PARAMETER_NAME);
+            actualChanges.put(LoanProductConstants.MULTI_DISBURSE_LOAN_PARAMETER_NAME, newValue);
+            this.multiDisburseLoan = newValue;
+        }
 
+        if (this.multiDisburseLoan) {
+            if (command.isChangeInIntegerParameterNamed(LoanProductConstants.MAX_TRANCHE_COUNT_PARAMETER_NAME, this.maxTrancheCount)) {
+                final Integer newValue = command.integerValueOfParameterNamed(LoanProductConstants.MAX_TRANCHE_COUNT_PARAMETER_NAME);
+                actualChanges.put(LoanProductConstants.MAX_TRANCHE_COUNT_PARAMETER_NAME, newValue);
+                this.maxTrancheCount = newValue;
+            }
+
+            if (command.isChangeInBigDecimalParameterNamed(LoanProductConstants.OUTSTANDING_LOAN_BALANCE_PARAMETER_NAME,
+                    this.outstandingLoanBalance)) {
+                final BigDecimal newValue = command
+                        .bigDecimalValueOfParameterNamed(LoanProductConstants.OUTSTANDING_LOAN_BALANCE_PARAMETER_NAME);
+                actualChanges.put(LoanProductConstants.OUTSTANDING_LOAN_BALANCE_PARAMETER_NAME, newValue);
+                this.outstandingLoanBalance = newValue;
+            }
+        } else {
+            this.maxTrancheCount = null;
+            this.outstandingLoanBalance = null;
+        }
+    }
 }

@@ -26,6 +26,10 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
+import org.apache.fineract.infrastructure.core.api.JsonCommand;
+import org.apache.fineract.portfolio.loanproduct.LoanProductConstants;
+
+import java.util.Map;
 
 /**
  * Entity for capturing interest recalculation settings
@@ -104,6 +108,75 @@ public class LoanProductInterestRecalculationDetails extends AbstractPersistable
         //
     }
 
+    public static LoanProductInterestRecalculationDetails createFrom(final JsonCommand command) {
+
+        final Integer interestRecalculationCompoundingMethod = InterestRecalculationCompoundingMethod
+                .fromInt(command.integerValueOfParameterNamed(LoanProductConstants.interestRecalculationCompoundingMethodParameterName))
+                .getValue();
+
+        final Integer loanRescheduleStrategyMethod = LoanRescheduleStrategyMethod
+                .fromInt(command.integerValueOfParameterNamed(LoanProductConstants.rescheduleStrategyMethodParameterName)).getValue();
+
+        final Integer recurrenceFrequency = command
+                .integerValueOfParameterNamed(LoanProductConstants.recalculationRestFrequencyTypeParameterName);
+        final Integer recurrenceOnNthDay = command
+                .integerValueOfParameterNamed(LoanProductConstants.recalculationRestFrequencyNthDayParamName);
+        final Integer recurrenceOnDay = command.integerValueOfParameterNamed(LoanProductConstants.recalculationRestFrequencyOnDayParamName);
+        final Integer recurrenceOnWeekday = command
+                .integerValueOfParameterNamed(LoanProductConstants.recalculationRestFrequencyWeekdayParamName);
+        Integer recurrenceInterval = command
+                .integerValueOfParameterNamed(LoanProductConstants.recalculationRestFrequencyIntervalParameterName);
+        final boolean isArrearsBasedOnOriginalSchedule = command
+                .booleanPrimitiveValueOfParameterNamed(LoanProductConstants.isArrearsBasedOnOriginalScheduleParamName);
+        RecalculationFrequencyType frequencyType = RecalculationFrequencyType.fromInt(recurrenceFrequency);
+        if (frequencyType.isSameAsRepayment()) {
+            recurrenceInterval = 0;
+        }
+
+        InterestRecalculationCompoundingMethod compoundingMethod = InterestRecalculationCompoundingMethod
+                .fromInt(interestRecalculationCompoundingMethod);
+        Integer compoundingRecurrenceFrequency = null;
+        Integer compoundingInterval = null;
+        Integer compoundingRecurrenceOnNthDay = null;
+        Integer compoundingRecurrenceOnDay = null;
+        Integer compoundingRecurrenceOnWeekday = null;
+        boolean allowCompoundingOnEod = false;
+        if (compoundingMethod.isCompoundingEnabled()) {
+            compoundingRecurrenceFrequency = command
+                    .integerValueOfParameterNamed(LoanProductConstants.recalculationCompoundingFrequencyTypeParameterName);
+            compoundingInterval = command
+                    .integerValueOfParameterNamed(LoanProductConstants.recalculationCompoundingFrequencyIntervalParameterName);
+            RecalculationFrequencyType compoundingFrequencyType = RecalculationFrequencyType.fromInt(compoundingRecurrenceFrequency);
+            if (compoundingFrequencyType.isSameAsRepayment()) {
+                recurrenceInterval = 0;
+            }
+            compoundingRecurrenceOnNthDay = command
+                    .integerValueOfParameterNamed(LoanProductConstants.recalculationCompoundingFrequencyNthDayParamName);
+            compoundingRecurrenceOnDay = command
+                    .integerValueOfParameterNamed(LoanProductConstants.recalculationCompoundingFrequencyOnDayParamName);
+            compoundingRecurrenceOnWeekday = command
+                    .integerValueOfParameterNamed(LoanProductConstants.recalculationCompoundingFrequencyWeekdayParamName);
+            if (!compoundingFrequencyType.isDaily()) {
+                allowCompoundingOnEod = command.booleanPrimitiveValueOfParameterNamed(LoanProductConstants.allowCompoundingOnEodParamName);
+            }
+        }
+
+        Integer preCloseInterestCalculationStrategy = command
+                .integerValueOfParameterNamed(LoanProductConstants.preClosureInterestCalculationStrategyParamName);
+        if (preCloseInterestCalculationStrategy == null) {
+            preCloseInterestCalculationStrategy = LoanPreCloseInterestCalculationStrategy.TILL_PRE_CLOSURE_DATE.getValue();
+        }
+
+        final boolean isCompoundingToBePostedAsTransaction = command
+                .booleanPrimitiveValueOfParameterNamed(LoanProductConstants.isCompoundingToBePostedAsTransactionParamName);
+
+        return new LoanProductInterestRecalculationDetails(interestRecalculationCompoundingMethod, loanRescheduleStrategyMethod,
+                recurrenceFrequency, recurrenceInterval, recurrenceOnNthDay, recurrenceOnDay, recurrenceOnWeekday,
+                compoundingRecurrenceFrequency, compoundingInterval, compoundingRecurrenceOnNthDay, compoundingRecurrenceOnDay,
+                compoundingRecurrenceOnWeekday, isArrearsBasedOnOriginalSchedule, preCloseInterestCalculationStrategy,
+                isCompoundingToBePostedAsTransaction, allowCompoundingOnEod, false);
+    }
+
     public LoanProductInterestRecalculationDetails(final Integer interestRecalculationCompoundingMethod,
             final Integer rescheduleStrategyMethod, final Integer restFrequencyType, final Integer restInterval,
             final Integer restFrequencyNthDay, final Integer restFrequencyOnDay, final Integer restFrequencyWeekday,
@@ -145,5 +218,207 @@ public class LoanProductInterestRecalculationDetails extends AbstractPersistable
 
     public LoanPreCloseInterestCalculationStrategy getPreCloseInterestCalculationStrategy() {
         return LoanPreCloseInterestCalculationStrategy.fromInt(this.preCloseInterestCalculationStrategy);
+    }
+
+    public void update(final JsonCommand command, final Map<String, Object> actualChanges, final String localeAsInput) {
+
+        if (command.isChangeInIntegerParameterNamed(LoanProductConstants.interestRecalculationCompoundingMethodParameterName,
+                this.interestRecalculationCompoundingMethod)) {
+            final Integer newValue = command
+                    .integerValueOfParameterNamed(LoanProductConstants.interestRecalculationCompoundingMethodParameterName);
+            actualChanges.put(LoanProductConstants.interestRecalculationCompoundingMethodParameterName, newValue);
+            actualChanges.put("locale", localeAsInput);
+            this.interestRecalculationCompoundingMethod = InterestRecalculationCompoundingMethod.fromInt(newValue).getValue();
+        }
+
+        if (command.isChangeInIntegerParameterNamed(LoanProductConstants.rescheduleStrategyMethodParameterName,
+                this.rescheduleStrategyMethod)) {
+            final Integer newValue = command.integerValueOfParameterNamed(LoanProductConstants.rescheduleStrategyMethodParameterName);
+            actualChanges.put(LoanProductConstants.rescheduleStrategyMethodParameterName, newValue);
+            actualChanges.put("locale", localeAsInput);
+            this.rescheduleStrategyMethod = LoanRescheduleStrategyMethod.fromInt(newValue).getValue();
+        }
+
+        if (command.isChangeInIntegerParameterNamed(LoanProductConstants.recalculationRestFrequencyTypeParameterName,
+                this.restFrequencyType)) {
+            final Integer newValue = command.integerValueOfParameterNamed(LoanProductConstants.recalculationRestFrequencyTypeParameterName);
+            actualChanges.put(LoanProductConstants.recalculationRestFrequencyTypeParameterName, newValue);
+            actualChanges.put("locale", localeAsInput);
+            this.restFrequencyType = RecalculationFrequencyType.fromInt(newValue).getValue();
+        }
+        RecalculationFrequencyType frequencyType = RecalculationFrequencyType.fromInt(this.restFrequencyType);
+        if (frequencyType.isSameAsRepayment()) {
+            this.restInterval = 0;
+            this.restFrequencyNthDay = null;
+            this.restFrequencyWeekday = null;
+            this.restFrequencyOnDay = null;
+        } else {
+            if (command.isChangeInIntegerParameterNamed(LoanProductConstants.recalculationRestFrequencyIntervalParameterName,
+                    this.restInterval)) {
+                Integer newValue = command
+                        .integerValueOfParameterNamed(LoanProductConstants.recalculationRestFrequencyIntervalParameterName);
+                actualChanges.put(LoanProductConstants.recalculationRestFrequencyIntervalParameterName, newValue);
+                actualChanges.put("locale", localeAsInput);
+                this.restInterval = newValue;
+            }
+
+            if (command.isChangeInIntegerParameterNamed(LoanProductConstants.recalculationRestFrequencyNthDayParamName,
+                    getRestFrequencyNthDay())) {
+                Integer newValue = command.integerValueOfParameterNamed(LoanProductConstants.recalculationRestFrequencyNthDayParamName);
+                actualChanges.put(LoanProductConstants.recalculationRestFrequencyNthDayParamName, newValue);
+                actualChanges.put("locale", localeAsInput);
+                this.restFrequencyNthDay = newValue;
+                this.restFrequencyOnDay = null;
+            }
+            if (command.isChangeInIntegerParameterNamed(LoanProductConstants.recalculationRestFrequencyWeekdayParamName,
+                    getRestFrequencyWeekday())) {
+                Integer newValue = command.integerValueOfParameterNamed(LoanProductConstants.recalculationRestFrequencyWeekdayParamName);
+                actualChanges.put(LoanProductConstants.recalculationRestFrequencyWeekdayParamName, newValue);
+                actualChanges.put("locale", localeAsInput);
+                this.restFrequencyWeekday = newValue;
+                this.restFrequencyOnDay = null;
+            }
+            if (command.isChangeInIntegerParameterNamed(LoanProductConstants.recalculationRestFrequencyOnDayParamName,
+                    getRestFrequencyOnDay())) {
+                Integer newValue = command.integerValueOfParameterNamed(LoanProductConstants.recalculationRestFrequencyOnDayParamName);
+                actualChanges.put(LoanProductConstants.recalculationRestFrequencyOnDayParamName, newValue);
+                actualChanges.put("locale", localeAsInput);
+                this.restFrequencyOnDay = newValue;
+                this.restFrequencyNthDay = null;
+                this.restFrequencyWeekday = null;
+            }
+
+            if (frequencyType.isWeekly()) {
+                this.restFrequencyNthDay = null;
+                this.restFrequencyOnDay = null;
+            } else if (frequencyType.isMonthly()) {
+                if (command.integerValueOfParameterNamed(LoanProductConstants.recalculationRestFrequencyOnDayParamName) != null) {
+                    this.restFrequencyNthDay = null;
+                    this.restFrequencyWeekday = null;
+                } else {
+                    this.restFrequencyOnDay = null;
+                }
+            } else if (frequencyType.isDaily()) {
+                this.restFrequencyNthDay = null;
+                this.restFrequencyWeekday = null;
+                this.restFrequencyOnDay = null;
+            }
+        }
+
+        if (command.isChangeInIntegerParameterNamed(LoanProductConstants.recalculationCompoundingFrequencyTypeParameterName,
+                this.compoundingFrequencyType)) {
+            final Integer newValue = command
+                    .integerValueOfParameterNamed(LoanProductConstants.recalculationCompoundingFrequencyTypeParameterName);
+            actualChanges.put(LoanProductConstants.recalculationCompoundingFrequencyTypeParameterName, newValue);
+            this.compoundingFrequencyType = RecalculationFrequencyType.fromInt(newValue).getValue();
+        }
+
+        InterestRecalculationCompoundingMethod compoundingMethod = InterestRecalculationCompoundingMethod
+                .fromInt(this.interestRecalculationCompoundingMethod);
+        if (compoundingMethod.isCompoundingEnabled()) {
+            RecalculationFrequencyType compoundingFrequencyType = RecalculationFrequencyType.fromInt(this.compoundingFrequencyType);
+            if (compoundingFrequencyType.isSameAsRepayment()) {
+                this.compoundingInterval = null;
+                this.compoundingFrequencyNthDay = null;
+                this.compoundingFrequencyWeekday = null;
+                this.compoundingFrequencyOnDay = null;
+            } else {
+                if (command.isChangeInIntegerParameterNamed(LoanProductConstants.recalculationCompoundingFrequencyIntervalParameterName,
+                        this.compoundingInterval)) {
+                    Integer newValue = command
+                            .integerValueOfParameterNamed(LoanProductConstants.recalculationCompoundingFrequencyIntervalParameterName);
+                    actualChanges.put(LoanProductConstants.recalculationCompoundingFrequencyIntervalParameterName, newValue);
+                    this.compoundingInterval = newValue;
+                }
+
+                if (command.isChangeInIntegerParameterNamed(LoanProductConstants.recalculationCompoundingFrequencyNthDayParamName,
+                        getCompoundingFrequencyNthDay())) {
+                    Integer newValue = command
+                            .integerValueOfParameterNamed(LoanProductConstants.recalculationCompoundingFrequencyNthDayParamName);
+                    actualChanges.put(LoanProductConstants.recalculationCompoundingFrequencyNthDayParamName, newValue);
+                    actualChanges.put("locale", localeAsInput);
+                    this.compoundingFrequencyNthDay = newValue;
+                    this.compoundingFrequencyOnDay = null;
+                }
+                if (command.isChangeInIntegerParameterNamed(LoanProductConstants.recalculationCompoundingFrequencyWeekdayParamName,
+                        getCompoundingFrequencyWeekday())) {
+                    Integer newValue = command
+                            .integerValueOfParameterNamed(LoanProductConstants.recalculationCompoundingFrequencyWeekdayParamName);
+                    actualChanges.put(LoanProductConstants.recalculationCompoundingFrequencyWeekdayParamName, newValue);
+                    actualChanges.put("locale", localeAsInput);
+                    this.compoundingFrequencyWeekday = newValue;
+                    this.compoundingFrequencyOnDay = null;
+                }
+                if (command.isChangeInIntegerParameterNamed(LoanProductConstants.recalculationCompoundingFrequencyOnDayParamName,
+                        getCompoundingFrequencyOnDay())) {
+                    Integer newValue = command
+                            .integerValueOfParameterNamed(LoanProductConstants.recalculationCompoundingFrequencyOnDayParamName);
+                    actualChanges.put(LoanProductConstants.recalculationCompoundingFrequencyOnDayParamName, newValue);
+                    actualChanges.put("locale", localeAsInput);
+                    this.compoundingFrequencyOnDay = newValue;
+                    this.compoundingFrequencyNthDay = null;
+                    this.compoundingFrequencyWeekday = null;
+                }
+
+                if (compoundingFrequencyType.isWeekly()) {
+                    this.compoundingFrequencyNthDay = null;
+                    this.compoundingFrequencyOnDay = null;
+                } else if (compoundingFrequencyType.isMonthly()) {
+                    if (command
+                            .integerValueOfParameterNamed(LoanProductConstants.recalculationCompoundingFrequencyOnDayParamName) != null) {
+                        this.compoundingFrequencyNthDay = null;
+                        this.compoundingFrequencyWeekday = null;
+                    } else {
+                        this.compoundingFrequencyOnDay = null;
+                    }
+                } else if (compoundingFrequencyType.isDaily()) {
+                    this.compoundingFrequencyNthDay = null;
+                    this.compoundingFrequencyWeekday = null;
+                    this.compoundingFrequencyOnDay = null;
+                }
+            }
+            if (!compoundingFrequencyType.isDaily()) {
+                if (command.isChangeInBooleanParameterNamed(LoanProductConstants.allowCompoundingOnEodParamName, getAllowCompoundingOnEod())) {
+                    boolean newValue = command.booleanPrimitiveValueOfParameterNamed(LoanProductConstants.allowCompoundingOnEodParamName);
+                    actualChanges.put(LoanProductConstants.allowCompoundingOnEodParamName, newValue);
+                    this.allowCompoundingOnEod = newValue;
+                }
+            } else {
+                this.allowCompoundingOnEod = false;
+            }
+        } else {
+            this.compoundingFrequencyType = null;
+            this.compoundingInterval = null;
+            this.compoundingFrequencyNthDay = null;
+            this.compoundingFrequencyWeekday = null;
+            this.compoundingFrequencyOnDay = null;
+        }
+
+        if (command.isChangeInBooleanParameterNamed(LoanProductConstants.isArrearsBasedOnOriginalScheduleParamName,
+                this.isArrearsBasedOnOriginalSchedule)) {
+            final boolean newValue = command
+                    .booleanPrimitiveValueOfParameterNamed(LoanProductConstants.isArrearsBasedOnOriginalScheduleParamName);
+            actualChanges.put(LoanProductConstants.isArrearsBasedOnOriginalScheduleParamName, newValue);
+            this.isArrearsBasedOnOriginalSchedule = newValue;
+        }
+
+        if (command.isChangeInIntegerParameterNamed(LoanProductConstants.preClosureInterestCalculationStrategyParamName,
+                this.preCloseInterestCalculationStrategy)) {
+            Integer newValue = command.integerValueOfParameterNamed(LoanProductConstants.preClosureInterestCalculationStrategyParamName);
+            if (newValue == null) {
+                newValue = LoanPreCloseInterestCalculationStrategy.TILL_PRE_CLOSURE_DATE.getValue();
+            }
+            actualChanges.put(LoanProductConstants.preClosureInterestCalculationStrategyParamName, newValue);
+            this.preCloseInterestCalculationStrategy = newValue;
+        }
+
+        if (command.isChangeInBooleanParameterNamed(LoanProductConstants.isCompoundingToBePostedAsTransactionParamName,
+                this.isCompoundingToBePostedAsTransaction)) {
+            final boolean newValue = command
+                    .booleanPrimitiveValueOfParameterNamed(LoanProductConstants.isCompoundingToBePostedAsTransactionParamName);
+            actualChanges.put(LoanProductConstants.isCompoundingToBePostedAsTransactionParamName, newValue);
+            this.isCompoundingToBePostedAsTransaction = newValue;
+        }
+
     }
 }

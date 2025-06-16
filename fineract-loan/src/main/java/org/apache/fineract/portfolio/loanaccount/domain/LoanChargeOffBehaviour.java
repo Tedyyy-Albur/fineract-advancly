@@ -28,7 +28,7 @@ public enum LoanChargeOffBehaviour implements ApiFacingEnum<LoanChargeOffBehavio
 
     REGULAR("chargeOffBehaviour.regular", "Regular"), //
     ZERO_INTEREST("chargeOffBehaviour.zeroInterest", "Zero interest after charge-off"), //
-    ACCELERATE_MATURITY("chargeOffBehaviour.accelerateMaturity", "Accelerate maturity to charge-off date"), //
+    ACCELERATE_MATURITY("chargeOffBehaviour.accelerateMaturity", "Accelerate maturity to charge-off date") //
     ;
 
     private final String code;

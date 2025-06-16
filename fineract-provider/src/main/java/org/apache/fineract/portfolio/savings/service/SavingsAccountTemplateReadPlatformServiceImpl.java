@@ -25,8 +25,12 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import liquibase.sqlgenerator.SqlGenerator;
 import org.apache.fineract.infrastructure.core.data.EnumOptionData;
 import org.apache.fineract.infrastructure.core.domain.JdbcSupport;
+import org.apache.fineract.infrastructure.core.service.PaginationHelper;
+import org.apache.fineract.infrastructure.core.service.database.DatabaseSpecificSQLGenerator;
 import org.apache.fineract.infrastructure.dataqueries.data.DatatableData;
 import org.apache.fineract.infrastructure.dataqueries.data.EntityTables;
 import org.apache.fineract.infrastructure.dataqueries.data.StatusEnum;
@@ -56,10 +60,13 @@ import org.apache.fineract.portfolio.savings.data.SavingsAccountSubStatusEnumDat
 import org.apache.fineract.portfolio.savings.data.SavingsAccountSummaryData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionData;
 import org.apache.fineract.portfolio.savings.data.SavingsProductData;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountAssembler;
+import org.apache.fineract.portfolio.savings.domain.SavingsAccountRepositoryWrapper;
 import org.apache.fineract.portfolio.tax.data.TaxGroupData;
 import org.apache.fineract.useradministration.domain.AppUser;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.util.CollectionUtils;
 
 public class SavingsAccountTemplateReadPlatformServiceImpl implements SavingsAccountTemplateReadPlatformService {
@@ -72,15 +79,53 @@ public class SavingsAccountTemplateReadPlatformServiceImpl implements SavingsAcc
     private final StaffReadPlatformService staffReadPlatformService;
     private final SavingsDropdownReadPlatformService dropdownReadPlatformService;
     private final ChargeReadPlatformService chargeReadPlatformService;
-
     private final EntityDatatableChecksReadService entityDatatableChecksReadService;
+    private final ColumnValidator columnValidator;
+    private final SavingsAccountAssembler savingAccountAssembler;
+    private final PaginationHelper paginationHelper;
+    private final SqlGenerator sqlGenerator;
+    private final SavingsAccountRepositoryWrapper savingsAccountRepositoryWrapper;
+    private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
-    public SavingsAccountTemplateReadPlatformServiceImpl(final PlatformSecurityContext context, final JdbcTemplate jdbcTemplate,
-            final ClientReadPlatformService clientReadPlatformService, final GroupReadPlatformService groupReadPlatformService,
+
+
+    // Constructor antiguo (para compatibilidad)
+    public SavingsAccountTemplateReadPlatformServiceImpl(
+            final PlatformSecurityContext context,
+            final JdbcTemplate jdbcTemplate,
+            final ClientReadPlatformService clientReadPlatformService,
+            final GroupReadPlatformService groupReadPlatformService,
             final SavingsProductReadPlatformService savingProductReadPlatformService,
-            final StaffReadPlatformService staffReadPlatformService, final SavingsDropdownReadPlatformService dropdownReadPlatformService,
+            final StaffReadPlatformService staffReadPlatformService,
+            final SavingsDropdownReadPlatformService dropdownReadPlatformService,
             final ChargeReadPlatformService chargeReadPlatformService,
-            final EntityDatatableChecksReadService entityDatatableChecksReadService, final ColumnValidator columnValidator) {
+            final EntityDatatableChecksReadService entityDatatableChecksReadService,
+            final ColumnValidator columnValidator) {
+
+        this(context, jdbcTemplate, clientReadPlatformService, groupReadPlatformService,
+                savingProductReadPlatformService, staffReadPlatformService, dropdownReadPlatformService,
+                chargeReadPlatformService, entityDatatableChecksReadService, columnValidator,
+                null, null, null, null, null);
+    }
+
+    // Nuevo constructor extendido
+    public SavingsAccountTemplateReadPlatformServiceImpl(
+            final PlatformSecurityContext context,
+            final JdbcTemplate jdbcTemplate,
+            final ClientReadPlatformService clientReadPlatformService,
+            final GroupReadPlatformService groupReadPlatformService,
+            final SavingsProductReadPlatformService savingProductReadPlatformService,
+            final StaffReadPlatformService staffReadPlatformService,
+            final SavingsDropdownReadPlatformService dropdownReadPlatformService,
+            final ChargeReadPlatformService chargeReadPlatformService,
+            final EntityDatatableChecksReadService entityDatatableChecksReadService,
+            final ColumnValidator columnValidator,
+            final SavingsAccountAssembler savingAccountAssembler,
+            final PaginationHelper paginationHelper,
+            final DatabaseSpecificSQLGenerator sqlGenerator,
+            final SavingsAccountRepositoryWrapper savingsAccountRepositoryWrapper,
+            final NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
+
         this.context = context;
         this.jdbcTemplate = jdbcTemplate;
         this.clientReadPlatformService = clientReadPlatformService;
@@ -90,7 +135,17 @@ public class SavingsAccountTemplateReadPlatformServiceImpl implements SavingsAcc
         this.dropdownReadPlatformService = dropdownReadPlatformService;
         this.chargeReadPlatformService = chargeReadPlatformService;
         this.entityDatatableChecksReadService = entityDatatableChecksReadService;
+        this.columnValidator = columnValidator;
+
+        // Nuevas asignaciones (si las vas a usar en algún punto)
+        this.savingAccountAssembler = savingAccountAssembler;
+        this.paginationHelper = paginationHelper;
+        this.sqlGenerator = (SqlGenerator) sqlGenerator;
+        this.savingsAccountRepositoryWrapper = savingsAccountRepositoryWrapper;
+        this.namedParameterJdbcTemplate = namedParameterJdbcTemplate;
     }
+
+
 
     @Override
     public SavingsAccountData retrieveTemplate(final Long clientId, final Long groupId, final Long productId,

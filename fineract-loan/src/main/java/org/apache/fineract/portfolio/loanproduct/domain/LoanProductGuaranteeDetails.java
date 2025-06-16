@@ -24,9 +24,13 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
+import java.util.Map;
+
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.fineract.infrastructure.core.domain.AbstractPersistableCustom;
+import org.apache.fineract.infrastructure.core.api.JsonCommand;
+import org.apache.fineract.portfolio.loanproduct.LoanProductConstants;
 
 /**
  * Entity for capturing interest recalculation settings
@@ -63,9 +67,42 @@ public class LoanProductGuaranteeDetails extends AbstractPersistableCustom<Long>
         this.minimumGuaranteeFromGuarantor = minimumGuaranteeFromGuarantor;
         this.minimumGuaranteeFromOwnFunds = minimumGuaranteeFromOwnFunds;
     }
+    public static LoanProductGuaranteeDetails createFrom(final JsonCommand command) {
+
+        final BigDecimal mandatoryGuarantee = command.bigDecimalValueOfParameterNamed(LoanProductConstants.mandatoryGuaranteeParamName);
+        final BigDecimal minimumGuaranteeFromGuarantor = command
+                .bigDecimalValueOfParameterNamed(LoanProductConstants.minimumGuaranteeFromGuarantorParamName);
+        final BigDecimal minimumGuaranteeFromOwnFunds = command
+                .bigDecimalValueOfParameterNamed(LoanProductConstants.minimumGuaranteeFromOwnFundsParamName);
+
+        return new LoanProductGuaranteeDetails(mandatoryGuarantee, minimumGuaranteeFromOwnFunds, minimumGuaranteeFromGuarantor);
+    }
 
     public void updateProduct(final LoanProduct loanProduct) {
         this.loanProduct = loanProduct;
     }
+    public void update(final JsonCommand command, final Map<String, Object> actualChanges) {
 
+        if (command.isChangeInBigDecimalParameterNamed(LoanProductConstants.mandatoryGuaranteeParamName, this.mandatoryGuarantee)) {
+            final BigDecimal newValue = command.bigDecimalValueOfParameterNamed(LoanProductConstants.mandatoryGuaranteeParamName);
+            actualChanges.put(LoanProductConstants.mandatoryGuaranteeParamName, newValue);
+            this.mandatoryGuarantee = newValue;
+        }
+
+        if (command.isChangeInBigDecimalParameterNamed(LoanProductConstants.minimumGuaranteeFromGuarantorParamName,
+                this.minimumGuaranteeFromGuarantor)) {
+            final BigDecimal newValue = command
+                    .bigDecimalValueOfParameterNamed(LoanProductConstants.minimumGuaranteeFromGuarantorParamName);
+            actualChanges.put(LoanProductConstants.minimumGuaranteeFromGuarantorParamName, newValue);
+            this.minimumGuaranteeFromGuarantor = newValue;
+        }
+
+        if (command.isChangeInBigDecimalParameterNamed(LoanProductConstants.minimumGuaranteeFromOwnFundsParamName,
+                this.minimumGuaranteeFromOwnFunds)) {
+            final BigDecimal newValue = command.bigDecimalValueOfParameterNamed(LoanProductConstants.minimumGuaranteeFromOwnFundsParamName);
+            actualChanges.put(LoanProductConstants.minimumGuaranteeFromOwnFundsParamName, newValue);
+            this.minimumGuaranteeFromOwnFunds = newValue;
+        }
+
+    }
 }

@@ -34,6 +34,8 @@ public interface JournalEntryWritePlatformService {
 
     void createJournalEntriesForLoan(AccountingBridgeDataDTO accountingBridgeData);
 
+    void createJournalEntriesForLoan(Map<String, Object> accountingBridgeData);
+
     void createJournalEntriesForSavings(Map<String, Object> accountingBridgeData);
 
     void createJournalEntriesForClientTransactions(Map<String, Object> accountingBridgeData);

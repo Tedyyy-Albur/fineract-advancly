@@ -31,11 +31,7 @@ import jakarta.persistence.UniqueConstraint;
 import jakarta.persistence.Version;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 import lombok.Getter;
 import lombok.Setter;
@@ -46,8 +42,10 @@ import org.apache.fineract.infrastructure.core.service.MathUtil;
 import org.apache.fineract.organisation.monetary.domain.MonetaryCurrency;
 import org.apache.fineract.organisation.monetary.domain.Money;
 import org.apache.fineract.organisation.office.domain.Office;
+import org.apache.fineract.portfolio.loanaccount.data.LoanTransactionEnumData;
 import org.apache.fineract.portfolio.loanaccount.domain.reaging.LoanReAgeParameter;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanScheduleType;
+import org.apache.fineract.portfolio.loanproduct.service.LoanEnumerations;
 import org.apache.fineract.portfolio.paymentdetail.domain.PaymentDetail;
 
 /**
@@ -965,4 +963,80 @@ public class LoanTransaction extends AbstractAuditableWithUTCDateTimeCustom<Long
         this.dateOf = transactionDate;
     }
 
+    public Map<String, Object> toMapData(final String currencyCode) {
+        final Map<String, Object> thisTransactionData = new LinkedHashMap<>();
+
+        final LoanTransactionEnumData transactionType = LoanEnumerations.transactionType(this.typeOf);
+
+        thisTransactionData.put("id", getId());
+        thisTransactionData.put("officeId", this.office.getId());
+        thisTransactionData.put("type", transactionType);
+        thisTransactionData.put("reversed", Boolean.valueOf(isReversed()));
+        thisTransactionData.put("date", getTransactionDate());
+        thisTransactionData.put("currencyCode", currencyCode);
+        thisTransactionData.put("amount", this.amount);
+        thisTransactionData.put("netDisbursalAmount", this.loan.getNetDisbursalAmount());
+
+        if (transactionType.isChargeback()
+                && (getLoan().getCreditAllocationRules() == null || getLoan().getCreditAllocationRules().size() == 0)) {
+            thisTransactionData.put("principalPortion", this.amount);
+        } else {
+            thisTransactionData.put("principalPortion", this.principalPortion);
+        }
+
+        thisTransactionData.put("interestPortion", this.interestPortion);
+        thisTransactionData.put("feeChargesPortion", this.feeChargesPortion);
+        thisTransactionData.put("penaltyChargesPortion", this.penaltyChargesPortion);
+        thisTransactionData.put("overPaymentPortion", this.overPaymentPortion);
+        if (transactionType.isChargeRefund()) {
+            thisTransactionData.put("chargeRefundChargeType", this.chargeRefundChargeType);
+        }
+
+        if (this.paymentDetail != null) {
+            thisTransactionData.put("paymentTypeId", this.paymentDetail.getPaymentType().getId());
+        }
+
+        if (!this.loanChargesPaid.isEmpty()) {
+            final List<Map<String, Object>> loanChargesPaidData = new ArrayList<>();
+            for (final LoanChargePaidBy chargePaidBy : this.loanChargesPaid) {
+                final Map<String, Object> loanChargePaidData = new LinkedHashMap<>();
+                loanChargePaidData.put("chargeId", chargePaidBy.getLoanCharge().getCharge().getId());
+                loanChargePaidData.put("isPenalty", chargePaidBy.getLoanCharge().isPenaltyCharge());
+                loanChargePaidData.put("loanChargeId", chargePaidBy.getLoanCharge().getId());
+                loanChargePaidData.put("amount", chargePaidBy.getAmount());
+
+                loanChargesPaidData.add(loanChargePaidData);
+            }
+            thisTransactionData.put("loanChargesPaid", loanChargesPaidData);
+        }
+
+        if (transactionType.isChargeback() && this.overPaymentPortion != null && this.overPaymentPortion.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal principalPaid = overPaymentPortion;
+            BigDecimal feePaid = BigDecimal.ZERO;
+            BigDecimal penaltyPaid = BigDecimal.ZERO;
+            if (getLoanTransactionToRepaymentScheduleMappings().size() > 0) {
+                principalPaid = getLoanTransactionToRepaymentScheduleMappings().stream()
+                        .map(mapping -> Optional.ofNullable(mapping.getPrincipalPortion()).orElse(BigDecimal.ZERO))
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                feePaid = getLoanTransactionToRepaymentScheduleMappings().stream()
+                        .map(mapping -> Optional.ofNullable(mapping.getFeeChargesPortion()).orElse(BigDecimal.ZERO))
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                penaltyPaid = getLoanTransactionToRepaymentScheduleMappings().stream()
+                        .map(mapping -> Optional.ofNullable(mapping.getPenaltyChargesPortion()).orElse(BigDecimal.ZERO))
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+            }
+            thisTransactionData.put("principalPaid", principalPaid);
+            thisTransactionData.put("feePaid", feePaid);
+            thisTransactionData.put("penaltyPaid", penaltyPaid);
+        }
+
+        LoanTransactionRelation loanTransactionRelation = loanTransactionRelations.stream()
+                .filter(e -> LoanTransactionRelationTypeEnum.CHARGE_ADJUSTMENT.equals(e.getRelationType())).findAny().orElse(null);
+        if (loanTransactionRelation != null) {
+            LoanCharge loanCharge = loanTransactionRelation.getToCharge();
+            thisTransactionData.put("loanChargeData", loanCharge.toData());
+        }
+
+        return thisTransactionData;
+    }
 }

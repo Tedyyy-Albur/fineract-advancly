@@ -30,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+
 @Getter
 @Setter
 @ConfigurationProperties(prefix = "fineract")
@@ -49,6 +50,8 @@ public class FineractProperties {
     private FineractModeProperties mode;
 
     private FineractCorrelationProperties correlation;
+
+    private FineractGeolocationProperties geolocation;
 
     private FineractPartitionedJob partitionedJob;
 
@@ -151,6 +154,13 @@ public class FineractProperties {
 
         private boolean enabled;
         private String headerName;
+    }
+
+    @Getter
+    @Setter
+    public static class FineractGeolocationProperties {
+
+        private boolean enabled;
     }
 
     @Getter
@@ -640,4 +650,5 @@ public class FineractProperties {
             }
         }
     }
+
 }

@@ -20,7 +20,6 @@ package org.apache.fineract.portfolio.savings.api;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -70,6 +69,7 @@ final class SavingsProductsApiResourceSwagger {
         @Schema(example = "1")
         public Integer accountingRule;
         public Set<PostSavingsCharges> charges;
+        public Set<PostSavingsCharges> accrualCharges;
         @Schema(example = "accountMappingForPayment")
         public String accountMappingForPayment;
     }
@@ -283,7 +283,7 @@ final class SavingsProductsApiResourceSwagger {
             }
 
             public GetSavingsProductsPaymentType paymentType;
-            public GetSavingsProductsFundSourceAccount fundSourceAccount;
+            public GetSavingsProductsGlAccount fundSourceAccount;
         }
 
         static final class GetSavingsProductsFeeToIncomeAccountMappings {
@@ -317,7 +317,21 @@ final class SavingsProductsApiResourceSwagger {
             }
 
             public GetSavingsProductsFeeToIncomeAccountMappingsCharge charge;
-            public GetSavingsProductsFeeToIncomeAccountMappingsIncomeAccount incomeAccount;
+            public GetSavingsProductsGlAccount incomeAccount;
+        }
+
+        static final class GetSavingsProductsCharge {
+
+            private GetSavingsProductsCharge() {}
+
+            @Schema(example = "12")
+            public Integer id;
+            @Schema(example = "12.34")
+            public BigDecimal amount;
+            @Schema(example = "Annual Fee")
+            public String name;
+            @Schema(example = "false")
+            public Boolean active;
         }
 
         static final class GetSavingsProductsPenaltyToIncomeAccountMappings {
@@ -365,7 +379,9 @@ final class SavingsProductsApiResourceSwagger {
         public Set<GetSavingsProductsFeeToIncomeAccountMappings> feeToIncomeAccountMappings;
         public Set<GetSavingsProductsPenaltyToIncomeAccountMappings> penaltyToIncomeAccountMappings;
         @Schema(example = "[]")
-        public List<Long> charges;
+        public Set<GetSavingsProductsCharge> charges;
+        @Schema(example = "[]")
+        public Set<GetSavingsProductsCharge> accrualCharges;
     }
 
     @Schema(description = "GetSavingsProductsTemplateResponse")

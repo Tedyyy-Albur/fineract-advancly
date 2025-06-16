@@ -19,6 +19,7 @@
 package org.apache.fineract.portfolio.charge.service;
 
 import java.util.List;
+import java.util.*;
 import org.apache.fineract.portfolio.charge.data.ChargeData;
 import org.apache.fineract.portfolio.charge.domain.ChargeTimeType;
 
@@ -112,6 +113,8 @@ public interface ChargeReadPlatformService {
      */
     List<ChargeData> retrieveSavingsProductCharges(Long savingsProductId);
 
+    Collection<ChargeData> retrieveSavingsProductAccrualCharges(Long savingsProductId);
+
     /** Retrieve savings account charges **/
     List<ChargeData> retrieveSavingsAccountApplicableCharges(Long savingsId);
 
@@ -121,4 +124,6 @@ public interface ChargeReadPlatformService {
     List<ChargeData> retrieveSharesApplicableCharges();
 
     List<ChargeData> retrieveShareProductCharges(Long shareProductId);
+
+
 }

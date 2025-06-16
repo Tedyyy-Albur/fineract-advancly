@@ -500,13 +500,14 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
 
         final boolean cashBasedAccountingEnabled = (Boolean) accountingBridgeData.get("cashBasedAccountingEnabled");
         final boolean accrualBasedAccountingEnabled = (Boolean) accountingBridgeData.get("accrualBasedAccountingEnabled");
+        final boolean isNegativeBalance = (accountingBridgeData.get("isNegativeBalance") != null) ? (Boolean) accountingBridgeData.get("isNegativeBalance") : false;
 
         if (cashBasedAccountingEnabled || accrualBasedAccountingEnabled) {
             final SavingsDTO savingsDTO = this.helper.populateSavingsDtoFromMap(accountingBridgeData, cashBasedAccountingEnabled,
                     accrualBasedAccountingEnabled);
             final AccountingProcessorForSavings accountingProcessorForSavings = this.accountingProcessorForSavingsFactory
                     .determineProcessor(savingsDTO);
-            accountingProcessorForSavings.createJournalEntriesForSavings(savingsDTO);
+            accountingProcessorForSavings.createJournalEntriesForSavings(savingsDTO, isNegativeBalance);
         }
     }
 
@@ -783,4 +784,20 @@ public class JournalEntryWritePlatformServiceJpaRepositoryImpl implements Journa
         }
     }
 
+    @Transactional
+    @Override
+    public void createJournalEntriesForLoan(final Map<String, Object> accountingBridgeData) {
+
+        final boolean cashBasedAccountingEnabled = (Boolean) accountingBridgeData.get("cashBasedAccountingEnabled");
+        final boolean upfrontAccrualBasedAccountingEnabled = (Boolean) accountingBridgeData.get("upfrontAccrualBasedAccountingEnabled");
+        final boolean periodicAccrualBasedAccountingEnabled = (Boolean) accountingBridgeData.get("periodicAccrualBasedAccountingEnabled");
+
+        if (cashBasedAccountingEnabled || upfrontAccrualBasedAccountingEnabled || periodicAccrualBasedAccountingEnabled) {
+            final LoanDTO loanDTO = this.helper.populateLoanDtoFromMap(accountingBridgeData, cashBasedAccountingEnabled,
+                    upfrontAccrualBasedAccountingEnabled, periodicAccrualBasedAccountingEnabled);
+            final AccountingProcessorForLoan accountingProcessorForLoan = this.accountingProcessorForLoanFactory
+                    .determineProcessor(loanDTO);
+            accountingProcessorForLoan.createJournalEntriesForLoan(loanDTO);
+        }
+    }
 }

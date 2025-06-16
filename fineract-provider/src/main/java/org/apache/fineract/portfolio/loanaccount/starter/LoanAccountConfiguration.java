@@ -36,6 +36,7 @@ import org.apache.fineract.infrastructure.security.utils.ColumnValidator;
 import org.apache.fineract.organisation.holiday.domain.HolidayRepository;
 import org.apache.fineract.organisation.holiday.domain.HolidayRepositoryWrapper;
 import org.apache.fineract.organisation.monetary.domain.ApplicationCurrencyRepositoryWrapper;
+import org.apache.fineract.organisation.office.domain.OfficeRepository;
 import org.apache.fineract.organisation.staff.domain.StaffRepository;
 import org.apache.fineract.organisation.staff.service.StaffReadPlatformService;
 import org.apache.fineract.organisation.teller.data.CashierTransactionDataValidator;
@@ -101,57 +102,7 @@ import org.apache.fineract.portfolio.loanaccount.serialization.LoanOfficerValida
 import org.apache.fineract.portfolio.loanaccount.serialization.LoanRefundValidator;
 import org.apache.fineract.portfolio.loanaccount.serialization.LoanTransactionValidator;
 import org.apache.fineract.portfolio.loanaccount.serialization.LoanUpdateCommandFromApiJsonDeserializer;
-import org.apache.fineract.portfolio.loanaccount.service.BulkLoansReadPlatformService;
-import org.apache.fineract.portfolio.loanaccount.service.BulkLoansReadPlatformServiceImpl;
-import org.apache.fineract.portfolio.loanaccount.service.GLIMAccountInfoReadPlatformService;
-import org.apache.fineract.portfolio.loanaccount.service.GLIMAccountInfoReadPlatformServiceImpl;
-import org.apache.fineract.portfolio.loanaccount.service.GLIMAccountInfoWritePlatformService;
-import org.apache.fineract.portfolio.loanaccount.service.GLIMAccountInfoWritePlatformServiceImpl;
-import org.apache.fineract.portfolio.loanaccount.service.LoanAccountServiceImpl;
-import org.apache.fineract.portfolio.loanaccount.service.LoanAccrualActivityProcessingService;
-import org.apache.fineract.portfolio.loanaccount.service.LoanAccrualEventService;
-import org.apache.fineract.portfolio.loanaccount.service.LoanAccrualTransactionBusinessEventService;
-import org.apache.fineract.portfolio.loanaccount.service.LoanAccrualTransactionBusinessEventServiceImpl;
-import org.apache.fineract.portfolio.loanaccount.service.LoanAccrualsProcessingService;
-import org.apache.fineract.portfolio.loanaccount.service.LoanApplicationWritePlatformService;
-import org.apache.fineract.portfolio.loanaccount.service.LoanApplicationWritePlatformServiceJpaRepositoryImpl;
-import org.apache.fineract.portfolio.loanaccount.service.LoanArrearsAgingService;
-import org.apache.fineract.portfolio.loanaccount.service.LoanArrearsAgingServiceImpl;
-import org.apache.fineract.portfolio.loanaccount.service.LoanAssembler;
-import org.apache.fineract.portfolio.loanaccount.service.LoanAssemblerImpl;
-import org.apache.fineract.portfolio.loanaccount.service.LoanBalanceService;
-import org.apache.fineract.portfolio.loanaccount.service.LoanCalculateRepaymentPastDueService;
-import org.apache.fineract.portfolio.loanaccount.service.LoanCapitalizedIncomeAmortizationEventService;
-import org.apache.fineract.portfolio.loanaccount.service.LoanCapitalizedIncomeAmortizationProcessingService;
-import org.apache.fineract.portfolio.loanaccount.service.LoanChargeAssembler;
-import org.apache.fineract.portfolio.loanaccount.service.LoanChargePaidByReadService;
-import org.apache.fineract.portfolio.loanaccount.service.LoanChargeReadPlatformService;
-import org.apache.fineract.portfolio.loanaccount.service.LoanChargeReadPlatformServiceImpl;
-import org.apache.fineract.portfolio.loanaccount.service.LoanChargeService;
-import org.apache.fineract.portfolio.loanaccount.service.LoanChargeWritePlatformService;
-import org.apache.fineract.portfolio.loanaccount.service.LoanChargeWritePlatformServiceImpl;
-import org.apache.fineract.portfolio.loanaccount.service.LoanDisbursementDetailsAssembler;
-import org.apache.fineract.portfolio.loanaccount.service.LoanDisbursementService;
-import org.apache.fineract.portfolio.loanaccount.service.LoanDownPaymentHandlerService;
-import org.apache.fineract.portfolio.loanaccount.service.LoanDownPaymentHandlerServiceImpl;
-import org.apache.fineract.portfolio.loanaccount.service.LoanJournalEntryPoster;
-import org.apache.fineract.portfolio.loanaccount.service.LoanOfficerService;
-import org.apache.fineract.portfolio.loanaccount.service.LoanReadPlatformService;
-import org.apache.fineract.portfolio.loanaccount.service.LoanReadPlatformServiceImpl;
-import org.apache.fineract.portfolio.loanaccount.service.LoanRefundService;
-import org.apache.fineract.portfolio.loanaccount.service.LoanScheduleService;
-import org.apache.fineract.portfolio.loanaccount.service.LoanStatusChangePlatformService;
-import org.apache.fineract.portfolio.loanaccount.service.LoanStatusChangePlatformServiceImpl;
-import org.apache.fineract.portfolio.loanaccount.service.LoanTransactionAssembler;
-import org.apache.fineract.portfolio.loanaccount.service.LoanTransactionProcessingService;
-import org.apache.fineract.portfolio.loanaccount.service.LoanTransactionRelationReadService;
-import org.apache.fineract.portfolio.loanaccount.service.LoanTransactionService;
-import org.apache.fineract.portfolio.loanaccount.service.LoanUtilService;
-import org.apache.fineract.portfolio.loanaccount.service.LoanWritePlatformService;
-import org.apache.fineract.portfolio.loanaccount.service.LoanWritePlatformServiceJpaRepositoryImpl;
-import org.apache.fineract.portfolio.loanaccount.service.ReplayedTransactionBusinessEventService;
-import org.apache.fineract.portfolio.loanaccount.service.ReplayedTransactionBusinessEventServiceImpl;
-import org.apache.fineract.portfolio.loanaccount.service.ReprocessLoanTransactionsService;
+import org.apache.fineract.portfolio.loanaccount.service.*;
 import org.apache.fineract.portfolio.loanaccount.service.adjustment.LoanAdjustmentService;
 import org.apache.fineract.portfolio.loanaccount.service.schedule.LoanScheduleComponent;
 import org.apache.fineract.portfolio.loanproduct.domain.LoanProductRepository;
@@ -169,6 +120,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 @Configuration
 public class LoanAccountConfiguration {
@@ -196,8 +148,30 @@ public class LoanAccountConfiguration {
     @Bean
     @ConditionalOnMissingBean(LoanAccrualTransactionBusinessEventService.class)
     public LoanAccrualTransactionBusinessEventService loanAccrualTransactionBusinessEventService(
-            final BusinessEventNotifierService businessEventNotifierService, final LoanTransactionRepository loanTransactionRepository) {
-        return new LoanAccrualTransactionBusinessEventServiceImpl(businessEventNotifierService, loanTransactionRepository);
+            BusinessEventNotifierService businessEventNotifierService,
+            LoanTransactionRepository loanTransactionRepository
+    ) {
+        return new LoanAccrualTransactionBusinessEventServiceImpl(
+                businessEventNotifierService,
+                loanTransactionRepository
+        );
+    }
+
+
+    @Bean
+    @ConditionalOnMissingBean(LoanAccrualWritePlatformService.class)
+    public LoanAccrualWritePlatformService loanAccrualWritePlatformService(LoanReadPlatformService loanReadPlatformService,
+                                                                           LoanChargeReadPlatformService loanChargeReadPlatformService, JdbcTemplate jdbcTemplate,
+                                                                           DatabaseSpecificSQLGenerator sqlGenerator, JournalEntryWritePlatformService journalEntryWritePlatformService,
+                                                                           PlatformSecurityContext context, LoanRepositoryWrapper loanRepositoryWrapper, LoanRepository loanRepository,
+                                                                           OfficeRepository officeRepository, BusinessEventNotifierService businessEventNotifierService,
+                                                                           LoanTransactionRepository loanTransactionRepository,
+                                                                           LoanAccrualTransactionBusinessEventService loanAccrualTransactionBusinessEventService,
+                                                                           ConfigurationDomainService configurationDomainService, ExternalIdFactory externalIdFactory) {
+        return new LoanAccrualWritePlatformServiceImpl(loanReadPlatformService, loanChargeReadPlatformService, jdbcTemplate,
+                journalEntryWritePlatformService, context, loanRepositoryWrapper, loanRepository, officeRepository,
+                businessEventNotifierService, loanTransactionRepository, loanAccrualTransactionBusinessEventService,
+                configurationDomainService, externalIdFactory);
     }
 
     @Bean
@@ -319,27 +293,46 @@ public class LoanAccountConfiguration {
 
     @Bean
     @ConditionalOnMissingBean(LoanReadPlatformService.class)
-    public LoanReadPlatformServiceImpl loanReadPlatformService(JdbcTemplate jdbcTemplate, PlatformSecurityContext context,
-            LoanRepositoryWrapper loanRepositoryWrapper, ApplicationCurrencyRepositoryWrapper applicationCurrencyRepository,
-            LoanProductReadPlatformService loanProductReadPlatformService, ClientReadPlatformService clientReadPlatformService,
-            GroupReadPlatformService groupReadPlatformService, LoanDropdownReadPlatformService loanDropdownReadPlatformService,
-            FundReadPlatformService fundReadPlatformService, ChargeReadPlatformService chargeReadPlatformService,
-            CodeValueReadPlatformService codeValueReadPlatformService, CalendarReadPlatformService calendarReadPlatformService,
-            StaffReadPlatformService staffReadPlatformService, PaginationHelper paginationHelper,
+    public LoanReadPlatformServiceImpl loanReadPlatformService(
+            JdbcTemplate jdbcTemplate,
+            PlatformSecurityContext context,
+            LoanRepositoryWrapper loanRepositoryWrapper,
+            ApplicationCurrencyRepositoryWrapper applicationCurrencyRepository,
+            LoanProductReadPlatformService loanProductReadPlatformService,
+            ClientReadPlatformService clientReadPlatformService,
+            GroupReadPlatformService groupReadPlatformService,
+            LoanDropdownReadPlatformService loanDropdownReadPlatformService,
+            FundReadPlatformService fundReadPlatformService,
+            ChargeReadPlatformService chargeReadPlatformService,
+            CodeValueReadPlatformService codeValueReadPlatformService,
+            CalendarReadPlatformService calendarReadPlatformService,
+            StaffReadPlatformService staffReadPlatformService,
+            NamedParameterJdbcTemplate namedParameterJdbcTemplate, // ← NUEVO
+            PaginationHelper paginationHelper,
             PaymentTypeReadPlatformService paymentTypeReadPlatformService,
-            FloatingRatesReadPlatformService floatingRatesReadPlatformService, LoanUtilService loanUtilService,
-            ConfigurationDomainService configurationDomainService, AccountDetailsReadPlatformService accountDetailsReadPlatformService,
-            ColumnValidator columnValidator, DatabaseSpecificSQLGenerator sqlGenerator,
-            DelinquencyReadPlatformService delinquencyReadPlatformService, LoanTransactionRepository loanTransactionRepository,
-            LoanChargePaidByReadService loanChargePaidByReadService, LoanTransactionRelationReadService loanTransactionRelationReadService,
-            LoanForeclosureValidator loanForeclosureValidator, LoanTransactionMapper loanTransactionMapper,
-            LoanTransactionProcessingService loanTransactionProcessingService, LoanBalanceService loanBalanceService,
+            FloatingRatesReadPlatformService floatingRatesReadPlatformService,
+            LoanUtilService loanUtilService,
+            ConfigurationDomainService configurationDomainService,
+            AccountDetailsReadPlatformService accountDetailsReadPlatformService,
+            ColumnValidator columnValidator,
+            DatabaseSpecificSQLGenerator sqlGenerator,
+            DelinquencyReadPlatformService delinquencyReadPlatformService,
+            LoanTransactionRepository loanTransactionRepository,
+            LoanChargePaidByReadService loanChargePaidByReadService,
+            LoanTransactionRelationReadService loanTransactionRelationReadService,
+            LoanForeclosureValidator loanForeclosureValidator,
+            LoanTransactionMapper loanTransactionMapper,
+            LoanTransactionProcessingService loanTransactionProcessingService,
+            LoanBalanceService loanBalanceService,
             LoanCapitalizedIncomeBalanceRepository loanCapitalizedIncomeBalanceRepository) {
-        return new LoanReadPlatformServiceImpl(jdbcTemplate, context, loanRepositoryWrapper, applicationCurrencyRepository,
+
+        return new LoanReadPlatformServiceImpl(
+                jdbcTemplate, context, loanRepositoryWrapper, applicationCurrencyRepository,
                 loanProductReadPlatformService, clientReadPlatformService, groupReadPlatformService, loanDropdownReadPlatformService,
                 fundReadPlatformService, chargeReadPlatformService, codeValueReadPlatformService, calendarReadPlatformService,
-                staffReadPlatformService, paginationHelper, paymentTypeReadPlatformService, floatingRatesReadPlatformService,
-                loanUtilService, configurationDomainService, accountDetailsReadPlatformService, columnValidator, sqlGenerator,
+                staffReadPlatformService, namedParameterJdbcTemplate, paginationHelper, // ← aquí también lo usas
+                paymentTypeReadPlatformService, floatingRatesReadPlatformService, loanUtilService,
+                configurationDomainService, accountDetailsReadPlatformService, columnValidator, sqlGenerator,
                 delinquencyReadPlatformService, loanTransactionRepository, loanChargePaidByReadService, loanTransactionRelationReadService,
                 loanForeclosureValidator, loanTransactionMapper, loanTransactionProcessingService, loanBalanceService,
                 loanCapitalizedIncomeBalanceRepository);

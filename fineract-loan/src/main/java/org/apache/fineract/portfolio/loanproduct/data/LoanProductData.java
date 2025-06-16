@@ -125,6 +125,7 @@ public class LoanProductData implements Serializable {
     private final EnumOptionData interestCalculationPeriodType;
     private final Boolean allowPartialPeriodInterestCalculation;
     private final BigDecimal inArrearsTolerance;
+    private final Boolean allowAccrualPostingInArrears;
     private final String transactionProcessingStrategyCode;
     private final String transactionProcessingStrategyName;
     private final Collection<AdvancedPaymentData> paymentAllocation;
@@ -346,6 +347,7 @@ public class LoanProductData implements Serializable {
         final boolean enableAutoRepaymentForDownPayment = false;
         final EnumOptionData repaymentStartDateType = null;
         final boolean enableInstallmentLevelDelinquency = false;
+        final boolean allowAccrualPostingInArrears = false;
         final EnumOptionData loanScheduleType = null;
         final EnumOptionData loanScheduleProcessingType = null;
         final boolean enableAccrualActivityPosting = false;
@@ -377,7 +379,7 @@ public class LoanProductData implements Serializable {
                 fixedPrincipalPercentagePerInstallment, delinquencyBucketOptions, delinquencyBucket, dueDaysForRepaymentEvent,
                 overDueDaysForRepaymentEvent, enableDownPayment, disbursedAmountPercentageDownPayment, enableAutoRepaymentForDownPayment,
                 paymentAllocation, creditAllocation, repaymentStartDateType, enableInstallmentLevelDelinquency, loanScheduleType,
-                loanScheduleProcessingType, fixedLength, enableAccrualActivityPosting, supportedInterestRefundTypes, chargeOffBehaviour,
+                loanScheduleProcessingType, fixedLength, allowAccrualPostingInArrears, enableAccrualActivityPosting, supportedInterestRefundTypes, chargeOffBehaviour,
                 interestRecognitionOnDisbursementDate, daysInYearTypeCustomStrategy, enableIncomeCapitalization,
                 capitalizedIncomeCalculationType, capitalizedIncomeStrategy, capitalizedIncomeType);
 
@@ -477,6 +479,7 @@ public class LoanProductData implements Serializable {
         final Collection<CreditAllocationData> creditAllocation = null;
         final EnumOptionData repaymentStartDateType = null;
         final boolean enableInstallmentLevelDelinquency = false;
+        final boolean allowAccrualPostingInArrears = false;
         final EnumOptionData loanScheduleType = null;
         final EnumOptionData loanScheduleProcessingType = null;
         final boolean enableAccrualActivityPosting = false;
@@ -508,7 +511,7 @@ public class LoanProductData implements Serializable {
                 fixedPrincipalPercentagePerInstallment, delinquencyBucketOptions, delinquencyBucket, dueDaysForRepaymentEvent,
                 overDueDaysForRepaymentEvent, enableDownPayment, disbursedAmountPercentageDownPayment, enableAutoRepaymentForDownPayment,
                 paymentAllocation, creditAllocation, repaymentStartDateType, enableInstallmentLevelDelinquency, loanScheduleType,
-                loanScheduleProcessingType, fixedLength, enableAccrualActivityPosting, supportedInterestRefundTypes, chargeOffBehaviour,
+                loanScheduleProcessingType, fixedLength, allowAccrualPostingInArrears, enableAccrualActivityPosting, supportedInterestRefundTypes, chargeOffBehaviour,
                 interestRecognitionOnDisbursementDate, daysInYearTypeCustomStrategy, enableIncomeCapitalization,
                 capitalizedIncomeCalculationType, capitalizedIncomeStrategy, capitalizedIncomeType);
 
@@ -615,6 +618,7 @@ public class LoanProductData implements Serializable {
         final Collection<CreditAllocationData> creditAllocation = null;
         final EnumOptionData repaymentStartDateType = LoanEnumerations.repaymentStartDateType(RepaymentStartDateType.DISBURSEMENT_DATE);
         final boolean enableInstallmentLevelDelinquency = false;
+        final boolean allowAccrualPostingInArrears = false;
         final EnumOptionData loanScheduleType = LoanScheduleType.CUMULATIVE.asEnumOptionData();
         final EnumOptionData loanScheduleProcessingType = LoanScheduleProcessingType.HORIZONTAL.asEnumOptionData();
         final boolean enableAccrualActivityPosting = false;
@@ -646,7 +650,7 @@ public class LoanProductData implements Serializable {
                 fixedPrincipalPercentagePerInstallment, delinquencyBucketOptions, delinquencyBucket, dueDaysForRepaymentEvent,
                 overDueDaysForRepaymentEvent, enableDownPayment, disbursedAmountPercentageDownPayment, enableAutoRepaymentForDownPayment,
                 paymentAllocation, creditAllocation, repaymentStartDateType, enableInstallmentLevelDelinquency, loanScheduleType,
-                loanScheduleProcessingType, fixedLength, enableAccrualActivityPosting, supportedInterestRefundTypes, chargeOffBehaviour,
+                loanScheduleProcessingType, fixedLength, allowAccrualPostingInArrears, enableAccrualActivityPosting, supportedInterestRefundTypes, chargeOffBehaviour,
                 interestRecognitionOnDisbursementDate, daysInYearTypeCustomStrategy, enableIncomeCapitalization,
                 capitalizedIncomeCalculationType, capitalizedIncomeStrategy, capitalizedIncomeType);
 
@@ -747,6 +751,7 @@ public class LoanProductData implements Serializable {
         final Collection<CreditAllocationData> creditAllocationData = null;
         final EnumOptionData repaymentStartDateType = LoanEnumerations.repaymentStartDateType(RepaymentStartDateType.DISBURSEMENT_DATE);
         final boolean enableInstallmentLevelDelinquency = false;
+        final boolean allowAccrualPostingInArrears = false;
         final EnumOptionData loanScheduleType = null;
         final EnumOptionData loanScheduleProcessingType = null;
         final boolean enableAccrualActivityPosting = false;
@@ -778,7 +783,7 @@ public class LoanProductData implements Serializable {
                 fixedPrincipalPercentagePerInstallment, delinquencyBucketOptions, delinquencyBucket, dueDaysForRepaymentEvent,
                 overDueDaysForRepaymentEvent, enableDownPayment, disbursedAmountPercentageDownPayment, enableAutoRepaymentForDownPayment,
                 paymentAllocation, creditAllocationData, repaymentStartDateType, enableInstallmentLevelDelinquency, loanScheduleType,
-                loanScheduleProcessingType, fixedLength, enableAccrualActivityPosting, supportedInterestRefundTypes, chargeOffBehaviour,
+                loanScheduleProcessingType, fixedLength, allowAccrualPostingInArrears, enableAccrualActivityPosting, supportedInterestRefundTypes, chargeOffBehaviour,
                 interestRecognitionOnDisbursementDate, daysInYearTypeCustomStrategy, enableIncomeCapitalization,
                 capitalizedIncomeCalculationType, capitalizedIncomeStrategy, capitalizedIncomeType);
     }
@@ -833,6 +838,7 @@ public class LoanProductData implements Serializable {
             final Collection<AdvancedPaymentData> paymentAllocation, final Collection<CreditAllocationData> creditAllocation,
             final EnumOptionData repaymentStartDateType, final boolean enableInstallmentLevelDelinquency,
             final EnumOptionData loanScheduleType, final EnumOptionData loanScheduleProcessingType, final Integer fixedLength,
+            final boolean allowAccrualPostingInArrears,
             final boolean enableAccrualActivityPosting, final List<StringEnumOptionData> supportedInterestRefundTypes,
             StringEnumOptionData chargeOffBehaviour, final boolean interestRecognitionOnDisbursementDate,
             final StringEnumOptionData daysInYearCustomStrategy, final boolean enableIncomeCapitalization,
@@ -847,6 +853,7 @@ public class LoanProductData implements Serializable {
         this.minPrincipal = minPrincipal;
         this.maxPrincipal = maxPrincipal;
         this.inArrearsTolerance = tolerance;
+        this.allowAccrualPostingInArrears = allowAccrualPostingInArrears;
         this.numberOfRepayments = numberOfRepayments;
         this.minNumberOfRepayments = minNumberOfRepayments;
         this.maxNumberOfRepayments = maxNumberOfRepayments;
@@ -1169,6 +1176,7 @@ public class LoanProductData implements Serializable {
         this.creditAllocationAllocationTypes = creditAllocationAllocationTypes;
         this.creditAllocationTransactionTypes = creditAllocationTransactionTypes;
         this.enableInstallmentLevelDelinquency = productData.enableInstallmentLevelDelinquency;
+        this.allowAccrualPostingInArrears = productData.allowAccrualPostingInArrears;
         this.loanScheduleType = productData.getLoanScheduleType();
         this.loanScheduleProcessingType = productData.getLoanScheduleProcessingType();
         this.loanScheduleProcessingTypeOptions = loanScheduleProcessingTypeOptions;

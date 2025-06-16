@@ -18,8 +18,9 @@
  */
 package org.apache.fineract.infrastructure.core.service.tenant;
 
-import java.util.List;
 import org.apache.fineract.infrastructure.core.domain.FineractPlatformTenant;
+
+import java.util.List;
 
 public interface TenantDetailsService {
 

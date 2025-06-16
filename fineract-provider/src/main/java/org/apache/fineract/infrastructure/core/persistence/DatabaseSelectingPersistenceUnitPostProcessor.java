@@ -18,13 +18,14 @@
  */
 package org.apache.fineract.infrastructure.core.persistence;
 
-import java.util.Map;
 import org.apache.fineract.infrastructure.core.service.database.DatabaseType;
 import org.apache.fineract.infrastructure.core.service.database.DatabaseTypeResolver;
 import org.eclipse.persistence.config.PersistenceUnitProperties;
 import org.eclipse.persistence.config.TargetDatabase;
 import org.springframework.orm.jpa.persistenceunit.MutablePersistenceUnitInfo;
 import org.springframework.orm.jpa.persistenceunit.PersistenceUnitPostProcessor;
+
+import java.util.Map;
 
 public class DatabaseSelectingPersistenceUnitPostProcessor implements PersistenceUnitPostProcessor {
 

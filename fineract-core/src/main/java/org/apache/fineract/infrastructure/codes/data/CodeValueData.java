@@ -18,16 +18,21 @@
  */
 package org.apache.fineract.infrastructure.codes.data;
 
-import java.io.Serializable;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
 
 /**
  * Immutable data object represent code-value data in system.
  */
 @Data
 @NoArgsConstructor
+@Builder
+@AllArgsConstructor
 @Accessors(chain = true)
 public class CodeValueData implements Serializable {
 

@@ -18,9 +18,10 @@
  */
 package org.apache.fineract.infrastructure.core.service.database;
 
-import java.util.List;
-import javax.sql.DataSource;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
+
+import javax.sql.DataSource;
+import java.util.List;
 
 public interface DatabaseQueryService {
 

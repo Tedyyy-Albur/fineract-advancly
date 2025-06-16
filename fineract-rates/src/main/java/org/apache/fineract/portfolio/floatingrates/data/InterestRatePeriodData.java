@@ -18,9 +18,10 @@
  */
 package org.apache.fineract.portfolio.floatingrates.data;
 
+import lombok.Getter;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import lombok.Getter;
 
 @Getter
 public class InterestRatePeriodData {

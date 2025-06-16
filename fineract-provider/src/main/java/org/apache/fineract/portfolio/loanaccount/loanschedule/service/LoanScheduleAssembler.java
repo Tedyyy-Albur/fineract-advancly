@@ -32,10 +32,10 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import java.time.LocalDate;
 import java.time.temporal.ChronoField;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -91,6 +91,7 @@ import org.apache.fineract.portfolio.loanaccount.api.LoanApiConstants;
 import org.apache.fineract.portfolio.loanaccount.data.DisbursementData;
 import org.apache.fineract.portfolio.loanaccount.data.HolidayDetailDTO;
 import org.apache.fineract.portfolio.loanaccount.data.LoanTermVariationsData;
+import org.apache.fineract.portfolio.loanaccount.data.OutstandingAmountsDTO;
 import org.apache.fineract.portfolio.loanaccount.data.ScheduleGeneratorDTO;
 import org.apache.fineract.portfolio.loanaccount.domain.Loan;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanCharge;
@@ -110,11 +111,18 @@ import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanApplica
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanScheduleGenerator;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanScheduleGeneratorFactory;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanScheduleModel;
+import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanScheduleModelDisbursementPeriod;
+import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanScheduleModelPeriod;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanScheduleProcessingType;
 import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanScheduleType;
 import org.apache.fineract.portfolio.loanaccount.serialization.VariableLoanScheduleFromApiJsonValidator;
+import org.apache.fineract.portfolio.loanaccount.service.LoanAccrualsProcessingService;
 import org.apache.fineract.portfolio.loanaccount.service.LoanChargeAssembler;
+import org.apache.fineract.portfolio.loanaccount.service.LoanChargeService;
 import org.apache.fineract.portfolio.loanaccount.service.LoanDisbursementDetailsAssembler;
+import org.apache.fineract.portfolio.loanaccount.service.LoanDisbursementService;
+import org.apache.fineract.portfolio.loanaccount.service.LoanProductRelatedDetailUpdateUtil;
+import org.apache.fineract.portfolio.loanaccount.service.LoanScheduleService;
 import org.apache.fineract.portfolio.loanaccount.service.LoanUtilService;
 import org.apache.fineract.portfolio.loanproduct.LoanProductConstants;
 import org.apache.fineract.portfolio.loanproduct.domain.AmortizationMethod;
@@ -155,7 +163,12 @@ public class LoanScheduleAssembler {
     private final LoanUtilService loanUtilService;
     private final LoanDisbursementDetailsAssembler loanDisbursementDetailsAssembler;
     private final LoanRepositoryWrapper loanRepositoryWrapper;
-    private final LoanLifecycleStateMachine defaultLoanLifecycleStateMachine;
+    private final LoanLifecycleStateMachine loanLifecycleStateMachine;
+    private final LoanAccrualsProcessingService loanAccrualsProcessingService;
+    private final LoanDisbursementService loanDisbursementService;
+    private final LoanChargeService loanChargeService;
+    private final LoanScheduleService loanScheduleService;
+    private final LoanProductRelatedDetailUpdateUtil relatedDetailUpdateUtil;
 
     public LoanApplicationTerms assembleLoanTerms(final JsonElement element) {
         final Long loanProductId = this.fromApiJsonHelper.extractLongNamed("productId", element);
@@ -223,7 +236,12 @@ public class LoanScheduleAssembler {
         }
 
         final BigDecimal interestRatePerPeriod = this.fromApiJsonHelper.extractBigDecimalWithLocaleNamed("interestRatePerPeriod", element);
-        final PeriodFrequencyType interestRatePeriodFrequencyType = loanProduct.getInterestPeriodFrequencyType();
+        PeriodFrequencyType interestRatePeriodFrequencyType = loanProduct.getInterestPeriodFrequencyType();
+        if (this.fromApiJsonHelper.parameterExists(LoanApiConstants.interestRateFrequencyTypeParameterName, element)) {
+            final Integer interestRateFrequencyType = this.fromApiJsonHelper
+                    .extractIntegerWithLocaleNamed(LoanApiConstants.interestRateFrequencyTypeParameterName, element);
+            interestRatePeriodFrequencyType = PeriodFrequencyType.fromInt(interestRateFrequencyType);
+        }
 
         BigDecimal annualNominalInterestRate = BigDecimal.ZERO;
         if (interestRatePerPeriod != null) {
@@ -408,13 +426,11 @@ public class LoanScheduleAssembler {
                             loanProductInterestRecalculationDetails.getCompoundingInterval(), recalculationCompoundingFrequencyNthDay,
                             compoundingRepeatsOnDay);
                 }
-                allowCompoundingOnEod = loanProductInterestRecalculationDetails.allowCompoundingOnEod();
+                allowCompoundingOnEod = loanProductInterestRecalculationDetails.getAllowCompoundingOnEod();
             }
         }
 
         final BigDecimal principalThresholdForLastInstalment = loanProduct.getPrincipalThresholdForLastInstallment();
-
-        final Integer installmentAmountInMultiplesOf = loanProduct.getInstallmentAmountInMultiplesOf();
 
         List<LoanTermVariationsData> loanTermVariations = new ArrayList<>();
         if (loanProduct.isLinkedToFloatingInterestRate()) {
@@ -466,14 +482,26 @@ public class LoanScheduleAssembler {
         final boolean isPrincipalCompoundingDisabledForOverdueLoans = this.configurationDomainService
                 .isPrincipalCompoundingDisabledForOverdueLoans();
 
-        final boolean isDownPaymentEnabled = loanProduct.getLoanProductRelatedDetail().isEnableDownPayment();
+        boolean isDownPaymentEnabled = loanProduct.getLoanProductRelatedDetail().isEnableDownPayment();
+        if (this.fromApiJsonHelper.parameterExists(LoanProductConstants.ENABLE_DOWN_PAYMENT, element)) {
+            isDownPaymentEnabled = this.fromApiJsonHelper.extractBooleanNamed(LoanProductConstants.ENABLE_DOWN_PAYMENT, element);
+        }
+
         BigDecimal disbursedAmountPercentageForDownPayment = null;
         boolean isAutoRepaymentForDownPaymentEnabled = false;
         if (isDownPaymentEnabled) {
+            isAutoRepaymentForDownPaymentEnabled = loanProduct.getLoanProductRelatedDetail().isEnableAutoRepaymentForDownPayment();
+            if (this.fromApiJsonHelper.parameterExists(LoanProductConstants.ENABLE_AUTO_REPAYMENT_DOWN_PAYMENT, element)) {
+                isAutoRepaymentForDownPaymentEnabled = this.fromApiJsonHelper
+                        .extractBooleanNamed(LoanProductConstants.ENABLE_AUTO_REPAYMENT_DOWN_PAYMENT, element);
+            }
+
             disbursedAmountPercentageForDownPayment = loanProduct.getLoanProductRelatedDetail()
                     .getDisbursedAmountPercentageForDownPayment();
-            isAutoRepaymentForDownPaymentEnabled = loanProduct.getLoanProductRelatedDetail().isEnableAutoRepaymentForDownPayment();
-
+            if (this.fromApiJsonHelper.parameterExists(LoanProductConstants.DISBURSED_AMOUNT_PERCENTAGE_DOWN_PAYMENT, element)) {
+                disbursedAmountPercentageForDownPayment = this.fromApiJsonHelper
+                        .extractBigDecimalWithLocaleNamed(LoanProductConstants.DISBURSED_AMOUNT_PERCENTAGE_DOWN_PAYMENT, element);
+            }
         }
 
         LoanScheduleType loanScheduleType = loanProduct.getLoanProductRelatedDetail().getLoanScheduleType();
@@ -493,8 +521,14 @@ public class LoanScheduleAssembler {
             fixedLength = this.fromApiJsonHelper.extractIntegerWithLocaleNamed(LoanProductConstants.FIXED_LENGTH, element);
         }
 
-        return LoanApplicationTerms.assembleFrom(applicationCurrency, loanTermFrequency, loanTermPeriodFrequencyType, numberOfRepayments,
-                repaymentEvery, repaymentPeriodFrequencyType, nthDay, weekDayType, amortizationMethod, interestMethod,
+        Boolean interestRecognitionOnDisbursementDate = loanProduct.getLoanProductRelatedDetail().isInterestRecognitionOnDisbursementDate();
+        if (this.fromApiJsonHelper.parameterExists(LoanApiConstants.INTEREST_RECOGNITION_ON_DISBURSEMENT_DATE, element)) {
+            interestRecognitionOnDisbursementDate = this.fromApiJsonHelper
+                    .extractBooleanNamed(LoanApiConstants.INTEREST_RECOGNITION_ON_DISBURSEMENT_DATE, element);
+        }
+
+        return LoanApplicationTerms.assembleFrom(applicationCurrency.toData(), loanTermFrequency, loanTermPeriodFrequencyType,
+                numberOfRepayments, repaymentEvery, repaymentPeriodFrequencyType, nthDay, weekDayType, amortizationMethod, interestMethod,
                 interestRatePerPeriod, interestRatePeriodFrequencyType, annualNominalInterestRate, interestCalculationPeriodMethod,
                 allowPartialPeriodInterestCalcualtion, principalMoney, expectedDisbursementDate, repaymentsStartingFromDate,
                 calculatedRepaymentsStartingFromDate, graceOnPrincipalPayment, recurringMoratoriumOnPrincipalPeriods,
@@ -502,12 +536,21 @@ public class LoanScheduleAssembler {
                 loanProduct.isMultiDisburseLoan(), emiAmount, disbursementDatas, maxOutstandingBalance, graceOnArrearsAgeing,
                 daysInMonthType, daysInYearType, isInterestRecalculationEnabled, recalculationFrequencyType, restCalendarInstance,
                 compoundingMethod, compoundingCalendarInstance, compoundingFrequencyType, principalThresholdForLastInstalment,
-                installmentAmountInMultiplesOf, loanProduct.preCloseInterestCalculationStrategy(), calendar, BigDecimal.ZERO,
-                loanTermVariations, isInterestChargedFromDateSameAsDisbursalDateEnabled, numberOfDays, isSkipMeetingOnFirstDay, detailDTO,
+                loanProduct.getLoanProductRelatedDetail().getInstallmentAmountInMultiplesOf(),
+                loanProduct.preCloseInterestCalculationStrategy(), calendar, BigDecimal.ZERO, loanTermVariations,
+                isInterestChargedFromDateSameAsDisbursalDateEnabled, numberOfDays, isSkipMeetingOnFirstDay, detailDTO,
                 allowCompoundingOnEod, isEqualAmortization, isInterestToBeRecoveredFirstWhenGreaterThanEMI,
                 fixedPrincipalPercentagePerInstallment, isPrincipalCompoundingDisabledForOverdueLoans, isDownPaymentEnabled,
                 disbursedAmountPercentageForDownPayment, isAutoRepaymentForDownPaymentEnabled, repaymentStartDateType, submittedOnDate,
-                loanScheduleType, loanScheduleProcessingType, fixedLength);
+                loanScheduleType, loanScheduleProcessingType, fixedLength,
+                loanProduct.getLoanProductRelatedDetail().isEnableAccrualActivityPosting(),
+                loanProduct.getLoanProductRelatedDetail().getSupportedInterestRefundTypes(),
+                loanProduct.getLoanProductRelatedDetail().getChargeOffBehaviour(), interestRecognitionOnDisbursementDate,
+                loanProduct.getLoanProductRelatedDetail().getDaysInYearCustomStrategy(),
+                loanProduct.getLoanProductRelatedDetail().isEnableIncomeCapitalization(),
+                loanProduct.getLoanProductRelatedDetail().getCapitalizedIncomeCalculationType(),
+                loanProduct.getLoanProductRelatedDetail().getCapitalizedIncomeStrategy(),
+                loanProduct.getLoanProductRelatedDetail().getCapitalizedIncomeType());
     }
 
     private CalendarInstance createCalendarForSameAsRepayment(final Integer repaymentEvery,
@@ -600,7 +643,7 @@ public class LoanScheduleAssembler {
 
     private void validateRepaymentsStartDateWithMeetingDates(final LocalDate repaymentsStartingFromDate, final Calendar calendar,
             boolean isSkipRepaymentOnFirstDayOfMonth, final Integer numberOfDays) {
-        if (repaymentsStartingFromDate != null && !CalendarUtils.isValidRedurringDate(calendar.getRecurrence(),
+        if (repaymentsStartingFromDate != null && !CalendarUtils.isValidRecurringDate(calendar.getRecurrence(),
                 calendar.getStartDateLocalDate(), repaymentsStartingFromDate, isSkipRepaymentOnFirstDayOfMonth, numberOfDays)) {
             final String errorMessage = "First repayment date '" + repaymentsStartingFromDate + "' do not fall on a meeting date";
             throw new LoanApplicationDateException("first.repayment.date.do.not.match.meeting.date", errorMessage,
@@ -629,9 +672,19 @@ public class LoanScheduleAssembler {
         }
     }
 
+    public LoanProductRelatedDetail assembleLoanProductRelatedDetail(final LoanApplicationTerms loanApplicationTerms,
+            final JsonElement element) {
+        LoanProductRelatedDetail loanProductRelatedDetail = loanApplicationTerms.toLoanProductRelatedDetail();
+        final String interestRateFrequencyTypeParamName = "interestRateFrequencyType";
+        if (this.fromApiJsonHelper.parameterExists(interestRateFrequencyTypeParamName, element)) {
+            final Integer newValue = this.fromApiJsonHelper.extractIntegerSansLocaleNamed(interestRateFrequencyTypeParamName, element);
+            loanProductRelatedDetail.setInterestPeriodFrequencyType(PeriodFrequencyType.fromInt(newValue));
+        }
+        return loanProductRelatedDetail;
+    }
+
     public LoanProductRelatedDetail assembleLoanProductRelatedDetail(final JsonElement element, final LoanProduct loanProduct) {
-        final LoanApplicationTerms loanApplicationTerms = assembleLoanApplicationTermsFrom(element, loanProduct);
-        return loanApplicationTerms.toLoanProductRelatedDetail();
+        return assembleLoanProductRelatedDetail(assembleLoanApplicationTermsFrom(element, loanProduct), element);
     }
 
     public LoanScheduleModel assembleLoanScheduleFrom(final JsonElement element) {
@@ -672,7 +725,9 @@ public class LoanScheduleAssembler {
             final List<Holiday> holidays, final WorkingDays workingDays, final JsonElement element,
             List<LoanDisbursementDetails> disbursementDetails) {
 
-        final Set<LoanCharge> loanCharges = this.loanChargeAssembler.fromParsedJson(element, disbursementDetails);
+        Set<LoanCharge> loanCharges = this.loanChargeAssembler.fromParsedJson(element, disbursementDetails);
+        final Set<LoanCharge> nonCompoundingCharges = validateDisbursementPercentageCharges(loanCharges);
+        loanCharges.removeAll(nonCompoundingCharges);
 
         final MathContext mc = MoneyHelper.getMathContext();
         HolidayDetailDTO detailDTO = new HolidayDetailDTO(isHolidayEnabled, holidays, workingDays);
@@ -695,7 +750,12 @@ public class LoanScheduleAssembler {
                     loanApplicationTerms.getInterestMethod());
         }
 
-        return loanScheduleGenerator.generate(mc, loanApplicationTerms, loanCharges, detailDTO);
+        LoanScheduleModel loanScheduleModel = loanScheduleGenerator.generate(mc, loanApplicationTerms, loanCharges, detailDTO);
+        if (!nonCompoundingCharges.isEmpty()) {
+            updateDisbursementWithCharges(loanApplicationTerms.getPrincipal().getAmount(), loanScheduleModel.getPeriods(),
+                    nonCompoundingCharges);
+        }
+        return loanScheduleModel;
     }
 
     public LoanScheduleModel assembleForInterestRecalculation(final LoanApplicationTerms loanApplicationTerms, final Long officeId,
@@ -716,7 +776,7 @@ public class LoanScheduleAssembler {
                 loanRepaymentScheduleTransactionProcessor, rescheduleFrom).getLoanScheduleModel();
     }
 
-    public LoanRepaymentScheduleInstallment calculatePrepaymentAmount(MonetaryCurrency currency, LocalDate onDate,
+    public OutstandingAmountsDTO calculatePrepaymentAmount(MonetaryCurrency currency, LocalDate onDate,
             LoanApplicationTerms loanApplicationTerms, Loan loan, final Long officeId,
             final LoanRepaymentScheduleTransactionProcessor loanRepaymentScheduleTransactionProcessor) {
         final LoanScheduleGenerator loanScheduleGenerator = this.loanScheduleFactory.create(loanApplicationTerms.getLoanScheduleType(),
@@ -732,7 +792,6 @@ public class LoanScheduleAssembler {
 
         return loanScheduleGenerator.calculatePrepaymentAmount(currency, onDate, loanApplicationTerms, mc, loan, holidayDetailDTO,
                 loanRepaymentScheduleTransactionProcessor);
-
     }
 
     public void assempleVariableScheduleFrom(final Loan loan, final String json) {
@@ -870,7 +929,7 @@ public class LoanScheduleAssembler {
                     overlappings);
         }
         LoanProductVariableInstallmentConfig installmentConfig = loan.loanProduct().loanProductVariableInstallmentConfig();
-        final CalendarInstance loanCalendarInstance = calendarInstanceRepository.findCalendarInstaneByEntityId(loan.getId(),
+        final CalendarInstance loanCalendarInstance = calendarInstanceRepository.findCalendarInstanceByEntityId(loan.getId(),
                 CalendarEntityType.LOANS.getValue());
         Calendar loanCalendar = null;
         if (loanCalendarInstance != null) {
@@ -890,7 +949,7 @@ public class LoanScheduleAssembler {
 
         LocalDate previousDate = loan.getDisbursementDate();
         for (LocalDate duedate : dueDates) {
-            int gap = Math.toIntExact(ChronoUnit.DAYS.between(previousDate, duedate));
+            int gap = DateUtils.getExactDifferenceInDays(previousDate, duedate);
             previousDate = duedate;
             if (gap < minGap || (maxGap != null && gap > maxGap)) {
                 baseDataValidator.reset().value(duedate).failWithCodeNoParameterAddedToErrorCode(
@@ -909,7 +968,9 @@ public class LoanScheduleAssembler {
         }
         final LocalDate recalculateFrom = null;
         ScheduleGeneratorDTO scheduleGeneratorDTO = this.loanUtilService.buildScheduleGeneratorDTO(loan, recalculateFrom);
-        loan.regenerateRepaymentSchedule(scheduleGeneratorDTO);
+        loanScheduleService.regenerateRepaymentSchedule(loan, scheduleGeneratorDTO);
+        loanAccrualsProcessingService.reprocessExistingAccruals(loan);
+
     }
 
     private List<LoanTermVariations> adjustExistingVariations(List<LoanTermVariations> variations, List<LoanTermVariations> newVariations,
@@ -1261,7 +1322,7 @@ public class LoanScheduleAssembler {
             changes.put(interestRatePerPeriodParamName, newValue);
             changes.put("locale", localeAsInput);
             loanProductRelatedDetail.setNominalInterestRatePerPeriod(newValue);
-            loanProductRelatedDetail.updateInterestRateDerivedFields(aprCalculator);
+            relatedDetailUpdateUtil.updateInterestRateDerivedFields(loanProductRelatedDetail, aprCalculator);
         }
 
         final String interestRateFrequencyTypeParamName = "interestRateFrequencyType";
@@ -1273,7 +1334,7 @@ public class LoanScheduleAssembler {
             changes.put(interestRateFrequencyTypeParamName, newValue);
             changes.put("locale", localeAsInput);
             loanProductRelatedDetail.setInterestPeriodFrequencyType(PeriodFrequencyType.fromInt(newValue));
-            loanProductRelatedDetail.updateInterestRateDerivedFields(aprCalculator);
+            relatedDetailUpdateUtil.updateInterestRateDerivedFields(loanProductRelatedDetail, aprCalculator);
         }
 
         final String interestTypeParamName = "interestType";
@@ -1379,6 +1440,52 @@ public class LoanScheduleAssembler {
             changes.put(LoanProductConstants.IS_EQUAL_AMORTIZATION_PARAM, newValue);
             loanProductRelatedDetail.setEqualAmortization(newValue);
         }
+
+        if (command.isChangeInBooleanParameterNamed(LoanProductConstants.ENABLE_DOWN_PAYMENT,
+                loanProductRelatedDetail.isEnableDownPayment())) {
+            final boolean newValue = command.booleanPrimitiveValueOfParameterNamed(LoanProductConstants.ENABLE_DOWN_PAYMENT);
+            changes.put(LoanProductConstants.ENABLE_DOWN_PAYMENT, newValue);
+            loanProductRelatedDetail.setEnableDownPayment(newValue);
+            if (!newValue) {
+                loanProductRelatedDetail.setEnableAutoRepaymentForDownPayment(false);
+                loanProductRelatedDetail.setDisbursedAmountPercentageForDownPayment(null);
+            }
+        }
+
+        if (loanProductRelatedDetail.isEnableDownPayment()) {
+            Boolean enableAutoRepaymentForDownPayment = loan.loanProduct().getLoanProductRelatedDetail()
+                    .isEnableAutoRepaymentForDownPayment();
+            if (this.fromApiJsonHelper.parameterExists(LoanProductConstants.ENABLE_AUTO_REPAYMENT_DOWN_PAYMENT, command.parsedJson())) {
+                if (command.isChangeInBooleanParameterNamed(LoanProductConstants.ENABLE_AUTO_REPAYMENT_DOWN_PAYMENT,
+                        loanProductRelatedDetail.isEnableAutoRepaymentForDownPayment())) {
+                    enableAutoRepaymentForDownPayment = command
+                            .booleanObjectValueOfParameterNamed(LoanProductConstants.ENABLE_AUTO_REPAYMENT_DOWN_PAYMENT);
+                    changes.put(LoanProductConstants.ENABLE_AUTO_REPAYMENT_DOWN_PAYMENT, enableAutoRepaymentForDownPayment);
+                }
+            }
+            loanProductRelatedDetail.setEnableAutoRepaymentForDownPayment(enableAutoRepaymentForDownPayment);
+
+            BigDecimal disbursedAmountPercentageDownPayment = loan.loanProduct().getLoanProductRelatedDetail()
+                    .getDisbursedAmountPercentageForDownPayment();
+            if (this.fromApiJsonHelper.parameterExists(LoanProductConstants.DISBURSED_AMOUNT_PERCENTAGE_DOWN_PAYMENT,
+                    command.parsedJson())) {
+                if (command.isChangeInBigDecimalParameterNamed(LoanProductConstants.DISBURSED_AMOUNT_PERCENTAGE_DOWN_PAYMENT,
+                        loanProductRelatedDetail.getDisbursedAmountPercentageForDownPayment())) {
+                    disbursedAmountPercentageDownPayment = command
+                            .bigDecimalValueOfParameterNamed(LoanProductConstants.DISBURSED_AMOUNT_PERCENTAGE_DOWN_PAYMENT);
+                    changes.put(LoanProductConstants.DISBURSED_AMOUNT_PERCENTAGE_DOWN_PAYMENT, disbursedAmountPercentageDownPayment);
+                }
+            }
+            loanProductRelatedDetail.setDisbursedAmountPercentageForDownPayment(disbursedAmountPercentageDownPayment);
+        }
+
+        if (command.isChangeInBooleanParameterNamed(LoanProductConstants.INTEREST_RECOGNITION_ON_DISBURSEMENT_DATE,
+                loanProductRelatedDetail.isInterestRecognitionOnDisbursementDate())) {
+            final boolean newValue = command
+                    .booleanPrimitiveValueOfParameterNamed(LoanProductConstants.INTEREST_RECOGNITION_ON_DISBURSEMENT_DATE);
+            changes.put(LoanProductConstants.INTEREST_RECOGNITION_ON_DISBURSEMENT_DATE, newValue);
+            loanProductRelatedDetail.updateInterestRecognitionOnDisbursementDate(newValue);
+        }
     }
 
     public Pair<Loan, Map<String, Object>> assembleLoanApproval(AppUser currentUser, JsonCommand command, Long loanId) {
@@ -1386,7 +1493,7 @@ public class LoanScheduleAssembler {
         final Loan loan = this.loanRepositoryWrapper.findOneWithNotFoundDetection(loanId, true);
 
         final Map<String, Object> actualChanges = new HashMap<>();
-        defaultLoanLifecycleStateMachine.transition(LoanEvent.LOAN_APPROVED, loan);
+        loanLifecycleStateMachine.transition(LoanEvent.LOAN_APPROVED, loan);
         actualChanges.put(PARAM_STATUS, LoanEnumerations.status(loan.getStatus()));
 
         LocalDate approvedOn = command.localDateValueOfParameterNamed(APPROVED_ON_DATE);
@@ -1411,11 +1518,11 @@ public class LoanScheduleAssembler {
             actualChanges.put(LoanApiConstants.disbursementNetDisbursalAmountParameterName, loan.getNetDisbursalAmount());
 
             if (disbursementDataArray != null) {
-                loan.updateDisbursementDetails(command, actualChanges);
+                loanDisbursementService.updateDisbursementDetails(loan, command, actualChanges);
             }
         }
 
-        loan.recalculateAllCharges();
+        loanChargeService.recalculateAllCharges(loan);
 
         loan.setApprovedOnDate(approvedOn);
         loan.setApprovedBy(currentUser);
@@ -1440,10 +1547,43 @@ public class LoanScheduleAssembler {
         if (!actualChanges.isEmpty()) {
             if (actualChanges.containsKey(LoanApiConstants.approvedLoanAmountParameterName)
                     || actualChanges.containsKey("recalculateLoanSchedule") || actualChanges.containsKey("expectedDisbursementDate")) {
-                loan.regenerateRepaymentSchedule(loanUtilService.buildScheduleGeneratorDTO(loan, null));
+                loanScheduleService.regenerateRepaymentSchedule(loan, loanUtilService.buildScheduleGeneratorDTO(loan, null));
+                loanAccrualsProcessingService.reprocessExistingAccruals(loan);
             }
         }
 
         return Pair.of(loan, actualChanges);
     }
+
+    private Set<LoanCharge> validateDisbursementPercentageCharges(final Set<LoanCharge> loanCharges) {
+        Set<LoanCharge> interestCharges = new HashSet<>();
+        if (loanCharges != null) {
+            for (final LoanCharge loanCharge : loanCharges) {
+                if (loanCharge.isDisbursementCharge() && (loanCharge.getChargeCalculation().isPercentageOfInterest()
+                        || loanCharge.getChargeCalculation().isPercentageOfAmountAndInterest())) {
+                    interestCharges.add(loanCharge);
+                }
+            }
+        }
+        return interestCharges;
+    }
+
+    private void updateDisbursementWithCharges(final BigDecimal principal, final Collection<LoanScheduleModelPeriod> periods,
+            final Set<LoanCharge> nonCompoundingCharges) {
+        final BigDecimal totalInterest = periods.stream().filter(p -> p.isRepaymentPeriod()).map(LoanScheduleModelPeriod::interestDue)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        for (LoanScheduleModelPeriod loanScheduleModelPeriod : periods) {
+            if (loanScheduleModelPeriod instanceof LoanScheduleModelDisbursementPeriod) {
+                for (final LoanCharge loanCharge : nonCompoundingCharges) {
+                    final BigDecimal amountAppliedTo = loanCharge.getChargeCalculation().isPercentageOfAmountAndInterest()
+                            ? principal.add(totalInterest)
+                            : totalInterest;
+                    loanChargeService.populateDerivedFields(loanCharge, amountAppliedTo, loanCharge.amountOrPercentage(), null,
+                            BigDecimal.ZERO);
+                    loanScheduleModelPeriod.addLoanCharges(loanCharge.getAmountOutstanding(), BigDecimal.ZERO);
+                }
+            }
+        }
+    }
+
 }

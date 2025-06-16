@@ -18,10 +18,10 @@
  */
 package org.apache.fineract.infrastructure.businessdate.data;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.apache.fineract.infrastructure.businessdate.domain.BusinessDateType;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class BusinessDataTypeTest {
 

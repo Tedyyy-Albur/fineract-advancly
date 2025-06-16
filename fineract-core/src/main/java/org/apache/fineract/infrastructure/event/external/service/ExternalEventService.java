@@ -20,10 +20,6 @@ package org.apache.fineract.infrastructure.event.external.service;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.fineract.avro.BulkMessageItemV1;
@@ -41,6 +37,11 @@ import org.apache.fineract.infrastructure.event.external.service.serialization.s
 import org.apache.fineract.infrastructure.event.external.service.support.ByteBufferConverter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -84,7 +85,7 @@ public class ExternalEventService {
         List<BusinessEvent<?>> events = bulkBusinessEvent.get();
         for (int i = 0; i < events.size(); i++) {
             BusinessEvent<?> event = events.get(i);
-            int id = i + 1;
+            long id = (long) i + 1;
             BulkMessageItemV1 message = bulkMessageItemFactory.createBulkMessageItem(id, event);
             messages.add(message);
         }

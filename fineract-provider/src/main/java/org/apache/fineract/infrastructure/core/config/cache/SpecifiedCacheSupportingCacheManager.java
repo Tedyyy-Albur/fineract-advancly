@@ -18,11 +18,6 @@
  */
 package org.apache.fineract.infrastructure.core.config.cache;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.cache.Cache;
@@ -30,6 +25,8 @@ import org.springframework.cache.CacheManager;
 import org.springframework.cache.jcache.JCacheCacheManager;
 import org.springframework.cache.support.NoOpCacheManager;
 import org.springframework.util.Assert;
+
+import java.util.*;
 
 @RequiredArgsConstructor
 public class SpecifiedCacheSupportingCacheManager implements CacheManager, InitializingBean {

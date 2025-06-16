@@ -23,14 +23,13 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.fineract.infrastructure.core.config.FineractProperties;
-import org.apache.fineract.infrastructure.security.utils.LogParameterEscapeUtil;
 import org.springframework.web.filter.OncePerRequestFilter;
-import org.apache.fineract.infrastructure.core.filters.ClientIpHolder;
+
+import java.io.IOException;
 
 @RequiredArgsConstructor
 @Slf4j

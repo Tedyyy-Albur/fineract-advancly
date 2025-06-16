@@ -18,9 +18,10 @@
  */
 package org.apache.fineract.infrastructure.event.external.service.message.domain;
 
+import lombok.Getter;
+
 import java.nio.ByteBuffer;
 import java.util.Objects;
-import lombok.Getter;
 
 @Getter
 public class MessageData {

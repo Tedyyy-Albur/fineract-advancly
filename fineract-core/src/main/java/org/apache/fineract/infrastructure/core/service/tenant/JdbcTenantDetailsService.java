@@ -18,10 +18,6 @@
  */
 package org.apache.fineract.infrastructure.core.service.tenant;
 
-import static org.apache.commons.lang3.StringUtils.isBlank;
-
-import java.util.List;
-import javax.sql.DataSource;
 import org.apache.fineract.infrastructure.core.domain.FineractPlatformTenant;
 import org.apache.fineract.infrastructure.security.exception.InvalidTenantIdentifierException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +26,11 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+
+import javax.sql.DataSource;
+import java.util.List;
+
+import static org.apache.commons.lang3.StringUtils.isBlank;
 
 /**
  * A JDBC implementation of {@link TenantDetailsService} for loading a tenants details by a

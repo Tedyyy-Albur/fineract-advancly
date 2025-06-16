@@ -18,8 +18,6 @@
  */
 package org.apache.fineract.infrastructure.event.external.service.message;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
 import lombok.RequiredArgsConstructor;
 import org.apache.fineract.avro.BulkMessageItemV1;
 import org.apache.fineract.avro.generator.ByteBufferSerializable;
@@ -30,6 +28,9 @@ import org.apache.fineract.infrastructure.event.external.service.serialization.s
 import org.apache.fineract.infrastructure.event.external.service.support.ByteBufferConverter;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+
 @Component
 @RequiredArgsConstructor
 public class BulkMessageItemFactory {
@@ -38,7 +39,7 @@ public class BulkMessageItemFactory {
     private final ByteBufferConverter byteBufferConverter;
     private final DataEnricherProcessor dataEnricherProcessor;
 
-    public BulkMessageItemV1 createBulkMessageItem(int id, BusinessEvent<?> event) throws IOException {
+    public BulkMessageItemV1 createBulkMessageItem(long id, BusinessEvent<?> event) throws IOException {
         BusinessEventSerializer eventSerializer = serializerFactory.create(event);
         ByteBufferSerializable avroDto = dataEnricherProcessor.enrich(eventSerializer.toAvroDTO(event));
         ByteBuffer buffer = avroDto.toByteBuffer();

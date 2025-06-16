@@ -18,15 +18,16 @@
  */
 package org.apache.fineract.infrastructure.core.service.database;
 
-import static java.lang.String.format;
-
 import jakarta.validation.constraints.NotNull;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.apache.fineract.infrastructure.core.exception.PlatformServiceUnavailableException;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static java.lang.String.format;
 
 @AllArgsConstructor
 @Getter

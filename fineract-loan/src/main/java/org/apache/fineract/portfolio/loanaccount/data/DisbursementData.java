@@ -30,7 +30,7 @@ import org.apache.fineract.portfolio.loanaccount.loanschedule.domain.LoanSchedul
  */
 @RequiredArgsConstructor
 @Getter
-public final class DisbursementData implements Comparable<DisbursementData> {
+public final class DisbursementData implements LoanPrincipalRelatedDataHolder, Comparable<DisbursementData> {
 
     private final Long id;
     private final LocalDate expectedDisbursementDate;
@@ -84,10 +84,7 @@ public final class DisbursementData implements Comparable<DisbursementData> {
 
     @Override
     public int compareTo(final DisbursementData obj) {
-        if (obj == null) {
-            return -1;
-        }
-        return DateUtils.compare(obj.expectedDisbursementDate, this.expectedDisbursementDate);
+        return DateUtils.compareWithNullsLast(obj.expectedDisbursementDate, this.expectedDisbursementDate);
     }
 
     public boolean isDueForDisbursement(LoanScheduleType loanScheduleType, final LocalDate fromDate, final LocalDate toDate) {
@@ -105,8 +102,7 @@ public final class DisbursementData implements Comparable<DisbursementData> {
 
     private boolean occursOnDayFromAndIncludingAndUpTo(final LocalDate fromInclusive, final LocalDate upToNotInclusive,
             final LocalDate target) {
-        return (DateUtils.isEqual(target, fromInclusive) || DateUtils.isAfter(target, fromInclusive))
-                && DateUtils.isBefore(target, upToNotInclusive);
+        return DateUtils.isDateInRangeFromInclusiveToExclusive(fromInclusive, upToNotInclusive, target);
     }
 
     public BigDecimal getWaivedChargeAmount() {

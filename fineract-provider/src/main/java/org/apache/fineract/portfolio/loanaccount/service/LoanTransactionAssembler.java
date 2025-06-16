@@ -18,6 +18,7 @@
  */
 package org.apache.fineract.portfolio.loanaccount.service;
 
+import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Map;
@@ -26,9 +27,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.domain.ExternalId;
 import org.apache.fineract.infrastructure.core.service.ExternalIdFactory;
+import org.apache.fineract.infrastructure.core.service.MathUtil;
 import org.apache.fineract.organisation.monetary.domain.Money;
 import org.apache.fineract.portfolio.loanaccount.api.LoanApiConstants;
 import org.apache.fineract.portfolio.loanaccount.domain.Loan;
+import org.apache.fineract.portfolio.loanaccount.domain.LoanRepaymentScheduleInstallment;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransaction;
 import org.apache.fineract.portfolio.loanaccount.domain.LoanTransactionType;
 import org.apache.fineract.portfolio.paymentdetail.domain.PaymentDetail;
@@ -64,5 +67,19 @@ public class LoanTransactionAssembler {
         final Money repaymentAmount = Money.of(loan.getCurrency(), transactionAmount);
         return LoanTransaction.repaymentType(repaymentTransactionType, loan.getOffice(), repaymentAmount, paymentDetail, transactionDate,
                 txnExternalId, null);
+    }
+
+    public LoanTransaction assembleAccrualActivityTransaction(@NotNull Loan loan, @NotNull LoanRepaymentScheduleInstallment installment,
+            @NotNull LocalDate transactionDate) {
+        ExternalId externalId = externalIdFactory.create();
+
+        BigDecimal interestPortion = installment.getInterestCharged();
+        BigDecimal feeChargesPortion = installment.getFeeChargesCharged();
+        BigDecimal penaltyChargesPortion = installment.getPenaltyCharges();
+        BigDecimal transactionAmount = MathUtil.add(interestPortion, feeChargesPortion, penaltyChargesPortion);
+        return MathUtil.isGreaterThanZero(transactionAmount)
+                ? new LoanTransaction(loan, loan.getOffice(), LoanTransactionType.ACCRUAL_ACTIVITY, transactionDate, transactionAmount,
+                        null, interestPortion, feeChargesPortion, penaltyChargesPortion, null, false, null, externalId)
+                : null;
     }
 }

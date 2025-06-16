@@ -18,12 +18,13 @@
  */
 package org.apache.fineract.infrastructure.event.external.producer;
 
-import java.util.List;
-import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.fineract.infrastructure.event.external.exception.AcknowledgementTimeoutException;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.Map;
 
 @Component
 @Conditional(NoopExternalEventEnabled.class)

@@ -18,11 +18,12 @@
  */
 package org.apache.fineract.infrastructure.core.config.cache;
 
-import java.util.Collection;
 import lombok.RequiredArgsConstructor;
 import org.apache.fineract.infrastructure.core.persistence.TransactionLifecycleCallback;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
+
+import java.util.Collection;
 
 @RequiredArgsConstructor
 public class TransactionBoundCacheManager implements TransactionLifecycleCallback, CacheManager {

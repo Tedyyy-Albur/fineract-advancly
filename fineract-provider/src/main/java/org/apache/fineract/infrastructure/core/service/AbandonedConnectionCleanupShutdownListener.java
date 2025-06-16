@@ -18,15 +18,16 @@
  */
 package org.apache.fineract.infrastructure.core.service;
 
-import java.sql.Driver;
-import java.sql.DriverManager;
-import java.util.Enumeration;
 import org.apache.fineract.infrastructure.jobs.service.JobRegisterServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.stereotype.Service;
+
+import java.sql.Driver;
+import java.sql.DriverManager;
+import java.util.Enumeration;
 
 @Service
 public class AbandonedConnectionCleanupShutdownListener implements ApplicationListener<ContextClosedEvent> {
@@ -57,7 +58,7 @@ public class AbandonedConnectionCleanupShutdownListener implements ApplicationLi
         while (drivers.hasMoreElements()) {
             Driver driver = drivers.nextElement();
             try {
-                java.sql.DriverManager.deregisterDriver(driver);
+                DriverManager.deregisterDriver(driver);
                 LOG.info("JDBC driver de-registered successfully");
             } catch (Throwable t) {
                 LOG.error("Exception occurred while de-register jdbc driver", t);

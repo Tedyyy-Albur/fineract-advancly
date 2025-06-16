@@ -22,14 +22,10 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Collection;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.Data;
 
+@Data
 @AllArgsConstructor
-@ToString
-@Getter
-@Setter
 public final class CollectionData {
 
     private BigDecimal availableDisbursementAmount;
@@ -47,9 +43,14 @@ public final class CollectionData {
     public Collection<DelinquencyPausePeriod> delinquencyPausePeriods;
     public Collection<InstallmentLevelDelinquency> installmentLevelDelinquency;
 
+    private BigDecimal delinquentPrincipal;
+    private BigDecimal delinquentInterest;
+    private BigDecimal delinquentFee;
+    private BigDecimal delinquentPenalty;
+
     public static CollectionData template() {
         final BigDecimal zero = BigDecimal.ZERO;
-        return new CollectionData(zero, 0L, null, 0L, null, zero, null, zero, null, zero, null, null);
+        return new CollectionData(zero, 0L, null, 0L, null, zero, null, zero, null, zero, null, null, zero, zero, zero, zero);
     }
 
 }

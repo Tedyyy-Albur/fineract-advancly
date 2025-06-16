@@ -18,9 +18,6 @@
  */
 package org.apache.fineract.infrastructure.event.external.repository;
 
-import java.time.LocalDate;
-import java.time.OffsetDateTime;
-import java.util.List;
 import org.apache.fineract.infrastructure.event.external.repository.domain.ExternalEvent;
 import org.apache.fineract.infrastructure.event.external.repository.domain.ExternalEventStatus;
 import org.apache.fineract.infrastructure.event.external.repository.domain.ExternalEventView;
@@ -31,9 +28,13 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.util.List;
+
 public interface ExternalEventRepository extends JpaRepository<ExternalEvent, Long>, JpaSpecificationExecutor<ExternalEvent> {
 
-    List<ExternalEventView> findByStatusOrderById(ExternalEventStatus status, Pageable batchSize);
+    List<ExternalEventView> findByStatusOrderByBusinessDateAscIdAsc(ExternalEventStatus status, Pageable batchSize);
 
     @Modifying(flushAutomatically = true)
     @Query("delete from ExternalEvent e where e.status = :status and e.businessDate <= :dateForPurgeCriteria")

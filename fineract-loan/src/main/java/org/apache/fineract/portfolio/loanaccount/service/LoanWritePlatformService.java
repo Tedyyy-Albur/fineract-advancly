@@ -90,6 +90,9 @@ public interface LoanWritePlatformService {
 
     CommandProcessingResult updateDisbursementDateAndAmountForTranche(Long loanId, Long disbursementId, JsonCommand command);
 
+    @Transactional
+    Loan recalculateInterest(Loan loan);
+
     CommandProcessingResult recoverFromGuarantor(Long loanId);
 
     void applyMeetingDateChanges(Calendar calendar, Collection<CalendarInstance> loanCalendarInstances);
@@ -120,4 +123,6 @@ public interface LoanWritePlatformService {
 
     @Transactional
     CommandProcessingResult undoChargeOff(JsonCommand command);
+
+    CommandProcessingResult makeRefund(Long loanId, LoanTransactionType loanTransactionType, JsonCommand command);
 }

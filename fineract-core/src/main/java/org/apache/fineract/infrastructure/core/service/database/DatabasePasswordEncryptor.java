@@ -18,15 +18,16 @@
  */
 package org.apache.fineract.infrastructure.core.service.database;
 
-import java.nio.charset.StandardCharsets;
-import java.text.MessageFormat;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.apache.fineract.infrastructure.core.config.FineractProperties;
 import org.apache.fineract.infrastructure.security.service.PasswordEncryptor;
 import org.apache.fineract.infrastructure.security.utils.EncryptionUtil;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Component;
+
+import java.nio.charset.StandardCharsets;
+import java.text.MessageFormat;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor

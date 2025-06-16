@@ -18,13 +18,14 @@
  */
 package org.apache.fineract.infrastructure.businessdate.mapper;
 
-import java.util.List;
 import org.apache.fineract.infrastructure.businessdate.data.BusinessDateData;
 import org.apache.fineract.infrastructure.businessdate.domain.BusinessDate;
 import org.apache.fineract.infrastructure.core.config.MapstructMapperConfig;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
+
+import java.util.List;
 
 @Mapper(config = MapstructMapperConfig.class)
 public interface BusinessDateMapper {

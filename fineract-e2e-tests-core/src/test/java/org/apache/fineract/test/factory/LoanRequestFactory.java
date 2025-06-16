@@ -19,11 +19,13 @@
 package org.apache.fineract.test.factory;
 
 import java.math.BigDecimal;
-import java.time.Clock;
-import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.apache.fineract.client.models.DisbursementDetail;
+import org.apache.fineract.client.models.InterestPauseRequestDto;
+import org.apache.fineract.client.models.PostAddAndDeleteDisbursementDetailRequest;
 import org.apache.fineract.client.models.PostCreateRescheduleLoansRequest;
 import org.apache.fineract.client.models.PostLoansLoanIdChargesChargeIdRequest;
 import org.apache.fineract.client.models.PostLoansLoanIdRequest;
@@ -39,6 +41,7 @@ import org.apache.fineract.test.data.RepaymentFrequencyType;
 import org.apache.fineract.test.data.TransactionProcessingStrategyCode;
 import org.apache.fineract.test.data.loanproduct.DefaultLoanProduct;
 import org.apache.fineract.test.data.loanproduct.LoanProductResolver;
+import org.apache.fineract.test.helper.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -79,8 +82,10 @@ public class LoanRequestFactory {
     public static final String DEFAULT_TRANSACTION_PROCESSING_STRATEGY_CODE = TransactionProcessingStrategyCode.PENALTIES_FEES_INTEREST_PRINCIPAL_ORDER.value;
 
     public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern(DATE_FORMAT);
-    public static final String DATE_SUBMIT_STRING = FORMATTER.format(LocalDate.now(Clock.systemUTC()).minusMonths(1L));
-    public static final String DEFAULT_TRANSACTION_DATE = FORMATTER.format(LocalDate.now(Clock.systemUTC()).minusMonths(1L));
+    public static final String DATE_SUBMIT_STRING = FORMATTER.format(Utils.now().minusMonths(1L));
+    public static final String DATE_REJECT_STRING = FORMATTER.format(Utils.now().minusMonths(1L));
+    public static final String DATE_WITHDRAWN_STRING = FORMATTER.format(Utils.now().minusMonths(1L));
+    public static final String DEFAULT_TRANSACTION_DATE = FORMATTER.format(Utils.now().minusMonths(1L));
 
     public PostLoansRequest defaultLoansRequest(Long clientId) {
         return new PostLoansRequest()//
@@ -108,7 +113,7 @@ public class LoanRequestFactory {
 
     public PutLoansLoanIdRequest modifySubmittedOnDateOnLoan(Long clientId, String newSubmittedOnDate) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_FORMAT);
-        String dateDisburseStr = formatter.format(LocalDate.now(Clock.systemUTC()));
+        String dateDisburseStr = formatter.format(Utils.now());
 
         return new PutLoansLoanIdRequest()//
                 .productId(loanProductResolver.resolve(DEFAULT_LOAN_PRODUCT))//
@@ -162,9 +167,29 @@ public class LoanRequestFactory {
                 .locale(DEFAULT_LOCALE);//
     }
 
+    public static PostLoansLoanIdRequest defaultLoanRejectRequest() {
+        return new PostLoansLoanIdRequest()//
+                .rejectedOnDate(DATE_REJECT_STRING)//
+                .dateFormat(DATE_FORMAT)//
+                .locale(DEFAULT_LOCALE);//
+    }
+
+    public static PostLoansLoanIdRequest defaultLoanWithdrawnRequest() {
+        return new PostLoansLoanIdRequest()//
+                .withdrawnOnDate(DATE_WITHDRAWN_STRING)//
+                .dateFormat(DATE_FORMAT)//
+                .locale(DEFAULT_LOCALE);//
+    }
+
     public static PostLoansLoanIdRequest defaultLoanDisburseRequest() {
         return new PostLoansLoanIdRequest().actualDisbursementDate(DATE_SUBMIT_STRING).transactionAmount(DEFAULT_DISBURSED_AMOUNT)
                 .paymentTypeId(Math.toIntExact(DEFAULT_PAYMENT_TYPE_ID)).dateFormat(DATE_FORMAT).locale(DEFAULT_LOCALE);
+    }
+
+    public static PostAddAndDeleteDisbursementDetailRequest defaultLoanDisbursementDetailRequest(
+            List<DisbursementDetail> disbursementData) {
+        return new PostAddAndDeleteDisbursementDetailRequest().disbursementData(disbursementData).dateFormat(DATE_FORMAT)
+                .locale(DEFAULT_LOCALE);
     }
 
     public static PostLoansLoanIdTransactionsRequest defaultPaymentTransactionRequest() {
@@ -186,6 +211,11 @@ public class LoanRequestFactory {
     }
 
     public static PostLoansLoanIdTransactionsTransactionIdRequest defaultRepaymentUndoRequest() {
+        return new PostLoansLoanIdTransactionsTransactionIdRequest().transactionDate(DEFAULT_TRANSACTION_DATE)
+                .transactionAmount(DEFAULT_UNDO_TRANSACTION_AMOUNT).dateFormat(DATE_FORMAT).locale(DEFAULT_LOCALE);
+    }
+
+    public static PostLoansLoanIdTransactionsTransactionIdRequest defaultCapitalizedIncomeAdjustmentUndoRequest() {
         return new PostLoansLoanIdTransactionsTransactionIdRequest().transactionDate(DEFAULT_TRANSACTION_DATE)
                 .transactionAmount(DEFAULT_UNDO_TRANSACTION_AMOUNT).dateFormat(DATE_FORMAT).locale(DEFAULT_LOCALE);
     }
@@ -263,5 +293,19 @@ public class LoanRequestFactory {
     public static PostLoansLoanIdTransactionsRequest defaultWriteOffRequest() {
         return new PostLoansLoanIdTransactionsRequest().transactionDate(DEFAULT_TRANSACTION_DATE).dateFormat(DATE_FORMAT)
                 .locale(DEFAULT_LOCALE).note("Write Off");
+    }
+
+    public static InterestPauseRequestDto defaultInterestPauseRequest() {
+        return new InterestPauseRequestDto().dateFormat(DATE_FORMAT).locale(DEFAULT_LOCALE).startDate(DEFAULT_TRANSACTION_DATE)
+                .endDate(DEFAULT_TRANSACTION_DATE);
+    }
+
+    public static PostLoansLoanIdTransactionsRequest defaultCapitalizedIncomeRequest() {
+        return new PostLoansLoanIdTransactionsRequest().transactionDate(DEFAULT_TRANSACTION_DATE).dateFormat(DATE_FORMAT)
+                .locale(DEFAULT_LOCALE).note("Capitalized Income");
+    }
+
+    public static PostLoansLoanIdRequest defaultLoanContractTerminationRequest() {
+        return new PostLoansLoanIdRequest().dateFormat(DATE_FORMAT).locale(DEFAULT_LOCALE).note("Contract Termination");
     }
 }

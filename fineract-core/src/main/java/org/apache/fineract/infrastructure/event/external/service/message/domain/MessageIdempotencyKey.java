@@ -18,8 +18,9 @@
  */
 package org.apache.fineract.infrastructure.event.external.service.message.domain;
 
-import java.util.Objects;
 import lombok.Getter;
+
+import java.util.Objects;
 
 @Getter
 public class MessageIdempotencyKey {

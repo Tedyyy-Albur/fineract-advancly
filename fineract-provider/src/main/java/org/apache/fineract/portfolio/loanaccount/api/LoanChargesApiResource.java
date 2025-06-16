@@ -42,6 +42,7 @@ import jakarta.ws.rs.core.UriInfo;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.apache.fineract.commands.domain.CommandWrapper;
@@ -78,6 +79,7 @@ public class LoanChargesApiResource {
     public static final String COMMAND_PAY = "pay";
     public static final String COMMAND_WAIVE = "waive";
     public static final String COMMAND_ADJUSTMENT = "adjustment";
+    public static final String COMMAND_DEACTIVATE_OVERDUE = "deactivateOverdue";
     private static final Set<String> RESPONSE_DATA_PARAMETERS = new HashSet<>(
             Arrays.asList("id", "chargeId", "name", "penalty", "chargeTimeType", "dueAsOfDate", "chargeCalculationType", "percentage",
                     "amountPercentageAppliedTo", "currency", "amountWaived", "amountWrittenOff", "amountOutstanding", "amountOrPercentage",
@@ -442,7 +444,7 @@ public class LoanChargesApiResource {
         final LoanChargeData loanCharge = this.loanChargeReadPlatformService.retrieveLoanChargeDetails(resolvedLoanChargeId,
                 resolvedLoanId);
 
-        final Collection<LoanInstallmentChargeData> installmentChargeData = this.loanChargeReadPlatformService
+        final List<LoanInstallmentChargeData> installmentChargeData = this.loanChargeReadPlatformService
                 .retrieveInstallmentLoanCharges(resolvedLoanChargeId, true);
 
         final LoanChargeData loanChargeData = new LoanChargeData(loanCharge, installmentChargeData);
@@ -460,6 +462,10 @@ public class LoanChargesApiResource {
         CommandProcessingResult result;
         if (CommandParameterUtil.is(commandParam, COMMAND_PAY)) {
             final CommandWrapper commandRequest = new CommandWrapperBuilder().payLoanCharge(resolvedLoanId, null)
+                    .withJson(apiRequestBodyAsJson).build();
+            result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
+        } else if (CommandParameterUtil.is(commandParam, COMMAND_DEACTIVATE_OVERDUE)) {
+            final CommandWrapper commandRequest = new CommandWrapperBuilder().deactivateOverdueLoanCharges(resolvedLoanId, null)
                     .withJson(apiRequestBodyAsJson).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         } else {
@@ -536,7 +542,7 @@ public class LoanChargesApiResource {
         ExternalId loanExternalId = ExternalIdFactory.produce(loanExternalIdStr);
         Long resolvedLoanId = getResolvedLoanId(loanId, loanExternalId);
 
-        final Collection<ChargeData> chargeOptions = this.chargeReadPlatformService.retrieveLoanAccountApplicableCharges(resolvedLoanId,
+        final List<ChargeData> chargeOptions = this.chargeReadPlatformService.retrieveLoanAccountApplicableCharges(resolvedLoanId,
                 new ChargeTimeType[] { ChargeTimeType.OVERDUE_INSTALLMENT });
         final LoanChargeData loanChargeTemplate = LoanChargeData.template(chargeOptions);
 

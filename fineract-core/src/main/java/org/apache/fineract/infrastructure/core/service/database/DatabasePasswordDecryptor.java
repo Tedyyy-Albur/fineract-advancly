@@ -18,10 +18,11 @@
  */
 package org.apache.fineract.infrastructure.core.service.database;
 
-import static org.apache.fineract.infrastructure.core.service.database.DatabasePasswordEncryptor.DEFAULT_ENCRYPTION;
+import org.apache.fineract.infrastructure.security.utils.EncryptionUtil;
 
 import java.text.MessageFormat;
-import org.apache.fineract.infrastructure.security.utils.EncryptionUtil;
+
+import static org.apache.fineract.infrastructure.core.service.database.DatabasePasswordEncryptor.DEFAULT_ENCRYPTION;
 
 public final class DatabasePasswordDecryptor {
 

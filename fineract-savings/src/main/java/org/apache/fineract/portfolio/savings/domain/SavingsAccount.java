@@ -1496,12 +1496,17 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
 
     public void validateAccountBalanceDoesNotViolateOverdraft(final List<SavingsAccountTransaction> savingsAccountTransaction,
             final BigDecimal amountPaid) {
-        if (savingsAccountTransaction != null) {
+        if (savingsAccountTransaction != null && savingsAccountTransaction.size() > 0) {
             SavingsAccountTransaction savingsAccountTransactionFirst = savingsAccountTransaction.get(0);
             if (!this.allowOverdraft) {
                 if (savingsAccountTransactionFirst.getRunningBalance(this.currency).minus(amountPaid).isLessThanZero()) {
                     throw new InsufficientAccountBalanceException("transactionAmount", getAccountBalance(), null, amountPaid);
                 }
+            }
+
+        } else {
+            if (!this.allowOverdraft) {
+                throw new InsufficientAccountBalanceException("transactionAmount", BigDecimal.ZERO, null, amountPaid);
             }
         }
     }
@@ -1749,13 +1754,13 @@ public class SavingsAccount extends AbstractAuditableWithUTCDateTimeCustom<Long>
                     .inMinMaxRange(0, 3);
 
             if (this.lockinPeriodFrequencyType != null) {
-                baseDataValidator.reset().parameter(lockinPeriodFrequencyParamName).value(this.lockinPeriodFrequency).notNull()
+                baseDataValidator.reset().parameter(lockinPeriodFrequencyParamName).value(this.lockinPeriodFrequency).ignoreIfNull()
                         .integerZeroOrGreater();
             }
         } else {
             baseDataValidator.reset().parameter(lockinPeriodFrequencyParamName).value(this.lockinPeriodFrequencyType)
                     .integerZeroOrGreater();
-            baseDataValidator.reset().parameter(lockinPeriodFrequencyTypeParamName).value(this.lockinPeriodFrequencyType).notNull()
+            baseDataValidator.reset().parameter(lockinPeriodFrequencyTypeParamName).value(this.lockinPeriodFrequencyType).ignoreIfNull()
                     .inMinMaxRange(0, 3);
         }
     }

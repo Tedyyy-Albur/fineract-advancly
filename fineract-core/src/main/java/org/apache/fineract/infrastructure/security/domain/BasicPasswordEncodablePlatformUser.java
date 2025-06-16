@@ -18,12 +18,13 @@
  */
 package org.apache.fineract.infrastructure.security.domain;
 
-import java.util.Collection;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.springframework.security.core.GrantedAuthority;
+
+import java.util.Collection;
 
 @Setter
 @NoArgsConstructor
@@ -32,9 +33,9 @@ public class BasicPasswordEncodablePlatformUser implements PlatformUser {
 
     @Getter
     private Long id;
-    @Getter(onMethod = @__(@Override))
+    @Getter(onMethod_ = @Override)
     private String username;
-    @Getter(onMethod = @__(@Override))
+    @Getter(onMethod_ = @Override)
     private String password;
 
     @Override

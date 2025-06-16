@@ -39,7 +39,7 @@ final class SavingsProductsApiResourceSwagger {
             private PostSavingsCharges() {}
 
             @Schema(example = "1")
-            public Integer id;
+            public Long id;
         }
 
         @Schema(example = "Passbook Savings")
@@ -80,7 +80,7 @@ final class SavingsProductsApiResourceSwagger {
         private PostSavingsProductsResponse() {}
 
         @Schema(example = "1")
-        public Integer resourceId;
+        public Long resourceId;
     }
 
     @Schema(description = "PutSavingsProductsProductIdRequest")
@@ -114,7 +114,7 @@ final class SavingsProductsApiResourceSwagger {
         }
 
         @Schema(example = "1")
-        public Integer resourceId;
+        public Long resourceId;
         public PutSavingsChanges changes;
     }
 
@@ -231,7 +231,7 @@ final class SavingsProductsApiResourceSwagger {
             private GetSavingsProductsGlAccount() {}
 
             @Schema(example = "12")
-            public Integer id;
+            public Long id;
             @Schema(example = "savings control")
             public String name;
             @Schema(example = "2000001")
@@ -265,9 +265,21 @@ final class SavingsProductsApiResourceSwagger {
                 private GetSavingsProductsPaymentType() {}
 
                 @Schema(example = "10")
-                public Integer id;
+                public Long id;
                 @Schema(example = "check")
                 public String name;
+            }
+
+            static final class GetSavingsProductsFundSourceAccount {
+
+                private GetSavingsProductsFundSourceAccount() {}
+
+                @Schema(example = "12")
+                public Long id;
+                @Schema(example = "savings ref")
+                public String name;
+                @Schema(example = "20")
+                public String glCode;
             }
 
             public GetSavingsProductsPaymentType paymentType;
@@ -283,13 +295,25 @@ final class SavingsProductsApiResourceSwagger {
                 private GetSavingsProductsFeeToIncomeAccountMappingsCharge() {}
 
                 @Schema(example = "11")
-                public Integer id;
+                public Long id;
                 @Schema(example = "sav charge")
                 public String name;
                 @Schema(example = "false")
                 public Boolean active;
                 @Schema(example = "false")
                 public Boolean penalty;
+            }
+
+            static final class GetSavingsProductsFeeToIncomeAccountMappingsIncomeAccount {
+
+                private GetSavingsProductsFeeToIncomeAccountMappingsIncomeAccount() {}
+
+                @Schema(example = "16")
+                public Long id;
+                @Schema(example = "income from savings fee")
+                public String name;
+                @Schema(example = "24")
+                public String glCode;
             }
 
             public GetSavingsProductsFeeToIncomeAccountMappingsCharge charge;
@@ -319,7 +343,7 @@ final class SavingsProductsApiResourceSwagger {
                 private GetSavingsProductsPenaltyToIncomeAccountMappingsCharge() {}
 
                 @Schema(example = "12")
-                public Integer id;
+                public Long id;
                 @Schema(example = "sav 2")
                 public String name;
                 @Schema(example = "false")
@@ -333,7 +357,7 @@ final class SavingsProductsApiResourceSwagger {
         }
 
         @Schema(example = "1")
-        public Integer id;
+        public Long id;
         @Schema(example = "savings product")
         public String name;
         @Schema(example = "sa1")
@@ -355,9 +379,7 @@ final class SavingsProductsApiResourceSwagger {
         public Set<GetSavingsProductsFeeToIncomeAccountMappings> feeToIncomeAccountMappings;
         public Set<GetSavingsProductsPenaltyToIncomeAccountMappings> penaltyToIncomeAccountMappings;
         @Schema(example = "[]")
-        public Set<GetSavingsProductsCharge> charges;
-        @Schema(example = "[]")
-        public Set<GetSavingsProductsCharge> accrualCharges;
+        public List<Long> charges;
     }
 
     @Schema(description = "GetSavingsProductsTemplateResponse")
@@ -454,11 +476,11 @@ final class SavingsProductsApiResourceSwagger {
                     private GetSavingsProductsLiabilityTagId() {}
 
                     @Schema(example = "0")
-                    public Integer id;
+                    public Long id;
                 }
 
                 @Schema(example = "15")
-                public Integer id;
+                public Long id;
                 @Schema(example = "Savings Control")
                 public String name;
                 @Schema(example = "50001")
@@ -496,7 +518,7 @@ final class SavingsProductsApiResourceSwagger {
                 }
 
                 @Schema(example = "2")
-                public Integer id;
+                public Long id;
                 @Schema(example = "Cash")
                 public String name;
                 @Schema(example = "100001")
@@ -527,7 +549,7 @@ final class SavingsProductsApiResourceSwagger {
                 }
 
                 @Schema(example = "6")
-                public Integer id;
+                public Long id;
                 @Schema(example = "Write Off Expenses")
                 public String name;
                 @Schema(example = "60001")
@@ -558,7 +580,7 @@ final class SavingsProductsApiResourceSwagger {
                 }
 
                 @Schema(example = "3")
-                public Integer id;
+                public Long id;
                 @Schema(example = "income from interest")
                 public String name;
                 @Schema(example = "40001")
@@ -641,7 +663,7 @@ final class SavingsProductsApiResourceSwagger {
             public GetSavingsChargeTimeType chargeTimeType;
             public GetSavingsProductsResponse.GetSavingsCurrency currency;
             @Schema(example = "4")
-            public Integer id;
+            public Long id;
             @Schema(example = "Savings charge 1")
             public String name;
             @Schema(example = "false")
@@ -675,6 +697,6 @@ final class SavingsProductsApiResourceSwagger {
         private DeleteSavingsProductsProductIdResponse() {}
 
         @Schema(example = "1")
-        public Integer resourceId;
+        public Long resourceId;
     }
 }

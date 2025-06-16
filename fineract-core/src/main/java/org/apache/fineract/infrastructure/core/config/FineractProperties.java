@@ -19,6 +19,7 @@
 
 package org.apache.fineract.infrastructure.core.config;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -39,6 +40,9 @@ public class FineractProperties {
     private String idempotencyKeyHeaderName;
 
     private Boolean insecureHttpClient;
+    private long clientConnectTimeout;
+    private long clientReadTimeout;
+    private long clientWriteTimeout;
 
     private FineractTenantProperties tenant;
 
@@ -46,9 +50,9 @@ public class FineractProperties {
 
     private FineractCorrelationProperties correlation;
 
-    private FineractGeolocationProperties geolocation;
-
     private FineractPartitionedJob partitionedJob;
+
+    private FineractGeolocationProperties geolocation;
 
     private FineractRemoteJobMessageHandlerProperties remoteJobMessageHandler;
 
@@ -79,6 +83,10 @@ public class FineractProperties {
     private FineractModulesProperties module;
 
     private FineractSqlValidationProperties sqlValidation;
+
+    private FineractCache cache;
+
+    private RetryProperties retry;
 
     @Getter
     @Setter
@@ -138,6 +146,12 @@ public class FineractProperties {
             return readEnabled && !writeEnabled && !batchWorkerEnabled && !batchManagerEnabled;
         }
     }
+    @Getter
+    @Setter
+    public static class FineractGeolocationProperties {
+
+        private boolean enabled;
+    }
 
     @Getter
     @Setter
@@ -145,13 +159,6 @@ public class FineractProperties {
 
         private boolean enabled;
         private String headerName;
-    }
-
-    @Getter
-    @Setter
-    public static class FineractGeolocationProperties {
-
-        private boolean enabled;
     }
 
     @Getter
@@ -288,6 +295,9 @@ public class FineractProperties {
 
         private int defaultTaskExecutorCorePoolSize;
         private int defaultTaskExecutorMaxPoolSize;
+        private int tenantUpgradeTaskExecutorCorePoolSize;
+        private int tenantUpgradeTaskExecutorMaxPoolSize;
+        private int tenantUpgradeTaskExecutorQueueCapacity;
     }
 
     @Getter
@@ -297,6 +307,9 @@ public class FineractProperties {
         private boolean enabled;
         private FineractExternalEventsProducerProperties producer;
         private int partitionSize;
+        private int threadPoolCorePoolSize;
+        private int threadPoolMaxPoolSize;
+        private int threadPoolQueueCapacity;
     }
 
     @Getter
@@ -488,6 +501,7 @@ public class FineractProperties {
         private FineractSecurityBasicAuth basicauth;
         private FineractSecurityTwoFactorAuth twoFactor;
         private FineractSecurityOAuth oauth;
+        private FineractSecurityHsts hsts;
 
         public void set2fa(FineractSecurityTwoFactorAuth twoFactor) {
             this.twoFactor = twoFactor;
@@ -517,6 +531,13 @@ public class FineractProperties {
 
     @Getter
     @Setter
+    public static class FineractSecurityHsts {
+
+        private boolean enabled;
+    }
+
+    @Getter
+    @Setter
     public static class FineractTransactionProcessorItemProperties {
 
         private boolean enabled;
@@ -537,11 +558,18 @@ public class FineractProperties {
     public static class FineractModulesProperties {
 
         private FineractInvestorModuleProperties investor;
+        private FineractSelfServiceModuleProperties selfService;
     }
 
     @Getter
     @Setter
     public static class FineractInvestorModuleProperties extends AbstractFineractModuleProperties {
+
+    }
+
+    @Getter
+    @Setter
+    public static class FineractSelfServiceModuleProperties extends AbstractFineractModuleProperties {
 
     }
 
@@ -577,5 +605,47 @@ public class FineractProperties {
 
         private String name;
         private String pattern;
+    }
+
+    @Getter
+    @Setter
+    public static class FineractCache {
+
+        private FineractCacheDetails defaultTemplate;
+        private Map<String, FineractCacheDetails> customTemplates = new HashMap<>();
+    }
+
+    @Getter
+    @Setter
+    public static class FineractCacheDetails {
+
+        private Duration ttl;
+        private Integer maximumEntries;
+    }
+
+    @Setter
+    @Getter
+    public static class RetryProperties {
+
+        private InstancesProperties instances;
+
+        @Setter
+        @Getter
+        public static class InstancesProperties {
+
+            private ExecuteCommandProperties executeCommand;
+
+            @Getter
+            @Setter
+            public static class ExecuteCommandProperties {
+
+                private Class<? extends Throwable>[] retryExceptions;
+                private Integer maxAttempts;
+                private Boolean enableExponentialBackoff;
+                private Double exponentialBackoffMultiplier;
+                private Duration waitDuration;
+
+            }
+        }
     }
 }

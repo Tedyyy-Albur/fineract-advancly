@@ -18,11 +18,12 @@
  */
 package org.apache.fineract.infrastructure.core.service.migration;
 
-import java.sql.SQLException;
 import liquibase.Liquibase;
 import liquibase.exception.DatabaseException;
 import liquibase.exception.LiquibaseException;
 import liquibase.integration.spring.SpringLiquibase;
+
+import java.sql.SQLException;
 
 public class ExtendedSpringLiquibase extends SpringLiquibase {
 

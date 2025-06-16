@@ -19,11 +19,12 @@
 package org.apache.fineract.infrastructure.core.service.database;
 
 import com.zaxxer.hikari.HikariConfig;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Component
 public class DatabaseTypeResolver implements InitializingBean {

@@ -18,10 +18,11 @@
  */
 package org.apache.fineract.infrastructure.codes.data;
 
-import java.io.Serializable;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
 
 /**
  * Immutable data object representing a code.

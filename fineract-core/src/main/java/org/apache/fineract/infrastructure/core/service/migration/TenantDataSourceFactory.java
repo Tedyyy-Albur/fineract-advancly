@@ -18,11 +18,7 @@
  */
 package org.apache.fineract.infrastructure.core.service.migration;
 
-import static org.apache.fineract.infrastructure.core.domain.FineractPlatformTenantConnection.toJdbcUrl;
-import static org.apache.fineract.infrastructure.core.domain.FineractPlatformTenantConnection.toProtocol;
-
 import com.zaxxer.hikari.HikariDataSource;
-import javax.sql.DataSource;
 import org.apache.fineract.infrastructure.core.domain.FineractPlatformTenant;
 import org.apache.fineract.infrastructure.core.domain.FineractPlatformTenantConnection;
 import org.apache.fineract.infrastructure.core.service.database.DatabasePasswordEncryptor;
@@ -31,6 +27,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+
+import static org.apache.fineract.infrastructure.core.domain.FineractPlatformTenantConnection.toJdbcUrl;
+import static org.apache.fineract.infrastructure.core.domain.FineractPlatformTenantConnection.toProtocol;
 
 @Component
 public class TenantDataSourceFactory {
@@ -48,7 +47,7 @@ public class TenantDataSourceFactory {
         this.databasePasswordEncryptor = databasePasswordEncryptor;
     }
 
-    public DataSource create(FineractPlatformTenant tenant) {
+    public HikariDataSource create(FineractPlatformTenant tenant) {
         HikariDataSource dataSource = new HikariDataSource();
         dataSource.setDriverClassName(tenantDataSource.getDriverClassName());
         dataSource.setDataSourceProperties(tenantDataSource.getDataSourceProperties());
@@ -61,10 +60,10 @@ public class TenantDataSourceFactory {
         if (!databasePasswordEncryptor.isMasterPasswordHashValid(tenantConnection.getMasterPasswordHash())) {
             throw new IllegalArgumentException("Invalid master password");
         }
-        dataSource.setUsername(tenantConnection.getSchemaUsername());
-        dataSource.setPassword(databasePasswordEncryptor.decrypt(tenantConnection.getSchemaPassword()));
+        dataSource.setUsername("root");
+        dataSource.setPassword("12345");
         String protocol = toProtocol(tenantDataSource);
-        String tenantJdbcUrl = toJdbcUrl(protocol, tenantConnection.getSchemaServer(), tenantConnection.getSchemaServerPort(),
+        String tenantJdbcUrl = toJdbcUrl(protocol, "localhost","3306",
                 tenantConnection.getSchemaName(), tenantConnection.getSchemaConnectionParameters());
         LOG.debug("JDBC URL for tenant {} is {}", tenant.getTenantIdentifier(), tenantJdbcUrl);
         dataSource.setJdbcUrl(tenantJdbcUrl);

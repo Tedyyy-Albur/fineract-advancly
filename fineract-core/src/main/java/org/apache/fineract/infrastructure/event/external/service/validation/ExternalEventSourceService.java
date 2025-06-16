@@ -18,12 +18,13 @@
  */
 package org.apache.fineract.infrastructure.event.external.service.validation;
 
-import static java.util.stream.Collectors.toList;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
 import java.util.Collection;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
+
+import static java.util.stream.Collectors.toList;
 
 @Component
 @RequiredArgsConstructor

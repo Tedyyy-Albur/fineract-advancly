@@ -18,22 +18,16 @@
  */
 package org.apache.fineract.infrastructure.dataqueries.data;
 
-import static org.apache.fineract.infrastructure.dataqueries.data.StatusEnum.ACTIVATE;
-import static org.apache.fineract.infrastructure.dataqueries.data.StatusEnum.APPROVE;
-import static org.apache.fineract.infrastructure.dataqueries.data.StatusEnum.CLOSE;
-import static org.apache.fineract.infrastructure.dataqueries.data.StatusEnum.CREATE;
-import static org.apache.fineract.infrastructure.dataqueries.data.StatusEnum.DISBURSE;
-import static org.apache.fineract.infrastructure.dataqueries.data.StatusEnum.REJECTED;
-import static org.apache.fineract.infrastructure.dataqueries.data.StatusEnum.WITHDRAWN;
-import static org.apache.fineract.infrastructure.dataqueries.data.StatusEnum.WRITE_OFF;
-
 import com.google.common.collect.ImmutableList;
 import jakarta.validation.constraints.NotNull;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import static org.apache.fineract.infrastructure.dataqueries.data.StatusEnum.*;
 
 public enum EntityTables {
 
@@ -49,11 +43,11 @@ public enum EntityTables {
     SHARE_PRODUCT("m_share_product", "share_product_id", "id"), //
     ;
 
-    public static final EntityTables[] VALUES = values();
+    static final EntityTables[] ENTITY_VALUES = values();
 
-    private static final List<String> ENTITY_NAMES = Arrays.stream(VALUES).map(EntityTables::getName).toList();
+    private static final List<String> ENTITY_NAMES = Arrays.stream(ENTITY_VALUES).map(EntityTables::getName).toList();
 
-    private static final Map<String, EntityTables> BY_ENTITY_NAME = Arrays.stream(VALUES)
+    private static final Map<String, EntityTables> BY_ENTITY_NAME = Arrays.stream(ENTITY_VALUES)
             .collect(Collectors.toMap(EntityTables::getName, e -> e));
 
     @NotNull
@@ -106,7 +100,7 @@ public enum EntityTables {
     }
 
     public boolean hasCheck() {
-        return checkStatuses != null && !checkStatuses.isEmpty();
+        return !checkStatuses.isEmpty();
     }
 
     public static List<String> getEntityNames() {
@@ -135,6 +129,6 @@ public enum EntityTables {
 
     @NotNull
     public static List<EntityTables> getFiltered(Predicate<EntityTables> filter) {
-        return Arrays.stream(VALUES).filter(filter).toList();
+        return Arrays.stream(ENTITY_VALUES).filter(filter).toList();
     }
 }

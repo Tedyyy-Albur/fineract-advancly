@@ -18,10 +18,11 @@
  */
 package org.apache.fineract.infrastructure.dataqueries.data;
 
-import java.io.Serializable;
-import java.util.List;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.io.Serializable;
+import java.util.List;
 
 /**
  * Immutable data object representing datatable data.

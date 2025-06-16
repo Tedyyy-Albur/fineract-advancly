@@ -33,7 +33,7 @@ public class MoneyHelper {
 
     private static RoundingMode roundingMode = null;
     private static MathContext mathContext;
-    private static final int PRECISION = 12;
+    public static final int PRECISION = 19;
 
     private static ConfigurationDomainService staticConfigurationDomainService;
 
@@ -65,6 +65,7 @@ public class MoneyHelper {
     public static void fetchRoundingModeFromGlobalConfig() {
         roundingMode = RoundingMode.valueOf(staticConfigurationDomainService.getRoundingMode());
         log.info("Fetch Rounding Mode from Global Config {}", roundingMode.name());
+        mathContext = null;
     }
 
 }

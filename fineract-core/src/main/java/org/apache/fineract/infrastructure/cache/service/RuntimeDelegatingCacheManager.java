@@ -19,11 +19,6 @@
 package org.apache.fineract.infrastructure.cache.service;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.fineract.infrastructure.cache.CacheApiConstants;
@@ -37,6 +32,8 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.support.NoOpCacheManager;
 import org.springframework.stereotype.Component;
+
+import java.util.*;
 
 /**
  * At present this implementation of {@link CacheManager} just delegates to the real {@link CacheManager} to use.

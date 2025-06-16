@@ -20,9 +20,10 @@ package org.apache.fineract.infrastructure.core.service.database;
 
 import com.google.common.collect.ImmutableList;
 import jakarta.validation.constraints.NotNull;
+import org.apache.fineract.infrastructure.core.exception.PlatformServiceUnavailableException;
+
 import java.io.Serializable;
 import java.sql.JDBCType;
-import org.apache.fineract.infrastructure.core.exception.PlatformServiceUnavailableException;
 
 public enum JdbcJavaType {
 

@@ -18,8 +18,9 @@
  */
 package org.apache.fineract.infrastructure.event.external.service.serialization.mapper.support;
 
-import java.time.MonthDay;
 import org.springframework.stereotype.Component;
+
+import java.time.MonthDay;
 
 @Component
 public class AvroMonthDayMapper {

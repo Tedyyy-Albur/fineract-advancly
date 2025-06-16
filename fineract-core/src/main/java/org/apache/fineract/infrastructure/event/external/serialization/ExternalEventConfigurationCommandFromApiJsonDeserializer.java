@@ -19,11 +19,6 @@
 package org.apache.fineract.infrastructure.event.external.serialization;
 
 import com.google.gson.reflect.TypeToken;
-import java.lang.reflect.Type;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.fineract.infrastructure.core.exception.InvalidJsonException;
@@ -31,6 +26,12 @@ import org.apache.fineract.infrastructure.core.serialization.AbstractFromApiJson
 import org.apache.fineract.infrastructure.core.serialization.FromJsonHelper;
 import org.apache.fineract.infrastructure.event.external.command.ExternalEventConfigurationCommand;
 import org.springframework.stereotype.Component;
+
+import java.lang.reflect.Type;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 @Component
 @AllArgsConstructor

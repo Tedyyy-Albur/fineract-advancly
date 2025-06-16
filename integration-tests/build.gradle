@@ -34,7 +34,7 @@ configurations {
     driver
 }
 dependencies {
-    driver 'mysql:mysql-connector-java:8.0.33'
+    driver 'com.mysql:mysql-connector-j'
 }
 
 cargo {
@@ -95,6 +95,18 @@ if (!project.hasProperty('cargoDisabled')) {
         dependsOn(cargoStartLocal)
         finalizedBy cargoStopLocal
     }
+}
+
+// Configure proper test output directories
+sourceSets {
+    test {
+        output.resourcesDir = layout.buildDirectory.dir('resources/test').get().asFile
+        java.destinationDirectory = layout.buildDirectory.dir('classes/java/test').get().asFile
+    }
+}
+
+tasks.named('compileTestJava') {
+    outputs.cacheIf { true }
 }
 
 // NOTE: Gradle suggested these dependencies

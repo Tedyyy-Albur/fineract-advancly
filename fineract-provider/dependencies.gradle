@@ -36,6 +36,7 @@ dependencies {
     implementation(project(path: ':fineract-progressive-loan'))
     implementation(project(path: ':fineract-report'))
     implementation(project(path: ':fineract-tax'))
+    implementation(project(path: ':fineract-command'))
 
     providedRuntime("org.springframework.boot:spring-boot-starter-tomcat")
 
@@ -113,6 +114,7 @@ dependencies {
             'org.mapstruct:mapstruct',
 
             'io.github.resilience4j:resilience4j-spring-boot3',
+            'org.reflections:reflections',
             )
 
     implementation 'software.amazon.msk:aws-msk-iam-auth'
@@ -136,7 +138,7 @@ dependencies {
     implementation ('jakarta.xml.bind:jakarta.xml.bind-api') {
         exclude group: 'jakarta.activation'
     }
-    implementation ('org.apache.activemq:activemq-client-jakarta') {
+    implementation ('org.apache.activemq:activemq-client') {
         exclude group: 'org.apache.geronimo.specs'
         exclude group: 'javax.annotation', module: 'javax.annotation-api'
     }

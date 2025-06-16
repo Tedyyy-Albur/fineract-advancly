@@ -18,17 +18,15 @@
  */
 package org.apache.fineract.infrastructure.event.external.service;
 
-import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
-
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ClassInfoList;
 import io.github.classgraph.ScanResult;
-import java.util.List;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.fineract.infrastructure.core.domain.FineractPlatformTenant;
+import org.apache.fineract.infrastructure.core.service.JdbcTemplateFactory;
+import org.apache.fineract.infrastructure.core.service.ThreadLocalContextUtil;
 import org.apache.fineract.infrastructure.core.service.tenant.TenantDetailsService;
 import org.apache.fineract.infrastructure.event.business.domain.BulkBusinessEvent;
 import org.apache.fineract.infrastructure.event.business.domain.BusinessEvent;
@@ -38,6 +36,11 @@ import org.apache.fineract.infrastructure.event.external.service.validation.Exte
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -61,6 +64,7 @@ public class ExternalEventConfigurationValidationService implements Initializing
 
         if (isNotEmpty(tenants)) {
             for (FineractPlatformTenant tenant : tenants) {
+                ThreadLocalContextUtil.setTenant(tenant);
                 validateEventConfigurationForIndividualTenant(tenant, eventClasses);
             }
         }
@@ -74,8 +78,7 @@ public class ExternalEventConfigurationValidationService implements Initializing
             log.debug("Missing from eventClasses: {}", CollectionUtils.subtract(eventClasses, eventConfigurations));
             log.debug("Missing from eventConfigurations: {}", CollectionUtils.subtract(eventConfigurations, eventClasses));
         }
-        //TODO EXTERNAL EVENT
-        
+
         if (eventClasses.size() != eventConfigurations.size()) {
             throw new ExternalEventConfigurationNotFoundException();
         }

@@ -18,11 +18,12 @@
  */
 package org.apache.fineract.infrastructure.event.external.service.serialization.mapper.support;
 
+import org.springframework.stereotype.Component;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
-import org.springframework.stereotype.Component;
 
 @Component
 public class AvroDateTimeMapper {

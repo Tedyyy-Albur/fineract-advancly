@@ -18,10 +18,11 @@
  */
 package org.apache.fineract.portfolio.floatingrates.data;
 
+import org.apache.fineract.infrastructure.core.service.DateUtils;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Collection;
-import org.apache.fineract.infrastructure.core.service.DateUtils;
 
 public class FloatingRateDTO {
 

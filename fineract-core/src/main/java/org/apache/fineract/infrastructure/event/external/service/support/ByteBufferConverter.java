@@ -18,8 +18,9 @@
  */
 package org.apache.fineract.infrastructure.event.external.service.support;
 
-import java.nio.ByteBuffer;
 import org.springframework.stereotype.Component;
+
+import java.nio.ByteBuffer;
 
 @Component
 public class ByteBufferConverter {

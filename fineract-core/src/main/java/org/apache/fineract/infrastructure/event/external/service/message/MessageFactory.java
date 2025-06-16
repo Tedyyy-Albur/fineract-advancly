@@ -18,7 +18,15 @@
  */
 package org.apache.fineract.infrastructure.event.external.service.message;
 
-import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.fineract.avro.MessageV1;
+import org.apache.fineract.infrastructure.core.service.ThreadLocalContextUtil;
+import org.apache.fineract.infrastructure.event.external.repository.domain.ExternalEventView;
+import org.apache.fineract.infrastructure.event.external.service.message.domain.*;
+import org.apache.fineract.infrastructure.event.external.service.support.ByteBufferConverter;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -27,23 +35,8 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.fineract.avro.MessageV1;
-import org.apache.fineract.infrastructure.core.service.ThreadLocalContextUtil;
-import org.apache.fineract.infrastructure.event.external.repository.domain.ExternalEventView;
-import org.apache.fineract.infrastructure.event.external.service.message.domain.MessageBusinessDate;
-import org.apache.fineract.infrastructure.event.external.service.message.domain.MessageCategory;
-import org.apache.fineract.infrastructure.event.external.service.message.domain.MessageCreatedAt;
-import org.apache.fineract.infrastructure.event.external.service.message.domain.MessageData;
-import org.apache.fineract.infrastructure.event.external.service.message.domain.MessageDataSchema;
-import org.apache.fineract.infrastructure.event.external.service.message.domain.MessageId;
-import org.apache.fineract.infrastructure.event.external.service.message.domain.MessageIdempotencyKey;
-import org.apache.fineract.infrastructure.event.external.service.message.domain.MessageSource;
-import org.apache.fineract.infrastructure.event.external.service.message.domain.MessageType;
-import org.apache.fineract.infrastructure.event.external.service.support.ByteBufferConverter;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.stereotype.Component;
+
+import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
 
 @Slf4j
 @Component
@@ -83,7 +76,7 @@ public class MessageFactory implements InitializingBean {
     }
 
     public MessageV1 createMessage(ExternalEventView event) {
-        MessageId id = new MessageId(event.getId().intValue());
+        MessageId id = new MessageId(event.getId());
         MessageSource source = new MessageSource(SOURCE_UUID);
         MessageType type = new MessageType(event.getType());
         MessageCategory category = new MessageCategory(event.getCategory());

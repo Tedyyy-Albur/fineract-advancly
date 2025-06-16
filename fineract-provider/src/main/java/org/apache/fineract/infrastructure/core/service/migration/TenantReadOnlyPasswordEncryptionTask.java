@@ -19,10 +19,6 @@
 package org.apache.fineract.infrastructure.core.service.migration;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.sql.ResultSet;
-import java.sql.Statement;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import liquibase.change.custom.CustomTaskChange;
 import liquibase.database.Database;
 import liquibase.database.jvm.JdbcConnection;
@@ -37,6 +33,11 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
+
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)

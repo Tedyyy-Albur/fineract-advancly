@@ -18,13 +18,14 @@
  */
 package org.apache.fineract.infrastructure.cache.service;
 
-import java.util.Map;
 import org.apache.fineract.infrastructure.cache.domain.CacheType;
 import org.apache.fineract.infrastructure.configuration.domain.ConfigurationDomainService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Map;
 
 @Service
 public class CacheWritePlatformServiceJpaRepositoryImpl implements CacheWritePlatformService {

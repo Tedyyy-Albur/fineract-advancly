@@ -19,11 +19,12 @@
 
 package org.apache.fineract.infrastructure.core.service.tenant;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import org.apache.fineract.infrastructure.core.domain.FineractPlatformTenant;
 import org.apache.fineract.infrastructure.core.domain.FineractPlatformTenantConnection;
 import org.springframework.jdbc.core.RowMapper;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public final class TenantMapper implements RowMapper<FineractPlatformTenant> {
 

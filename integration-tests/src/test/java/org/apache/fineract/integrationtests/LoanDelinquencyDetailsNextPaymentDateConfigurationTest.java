@@ -20,7 +20,6 @@ package org.apache.fineract.integrationtests;
 
 import static java.lang.Boolean.TRUE;
 import static org.apache.fineract.infrastructure.businessdate.domain.BusinessDateType.BUSINESS_DATE;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -33,8 +32,9 @@ import org.apache.fineract.client.models.GetLoanProductsProductIdResponse;
 import org.apache.fineract.client.models.GetLoansLoanIdResponse;
 import org.apache.fineract.client.models.PostLoanProductsRequest;
 import org.apache.fineract.client.models.PostLoanProductsResponse;
+import org.apache.fineract.client.models.PutGlobalConfigurationsRequest;
+import org.apache.fineract.infrastructure.configuration.api.GlobalConfigurationConstants;
 import org.apache.fineract.integrationtests.common.ClientHelper;
-import org.apache.fineract.integrationtests.common.GlobalConfigurationHelper;
 import org.apache.fineract.integrationtests.common.products.DelinquencyBucketsHelper;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -48,8 +48,8 @@ public class LoanDelinquencyDetailsNextPaymentDateConfigurationTest extends Base
         runAt("01 November 2023", () -> {
             try {
                 // update Global configuration for next payment date
-                GlobalConfigurationHelper.updateLoanNextPaymentDateConfiguration(this.requestSpec, this.responseSpec,
-                        "next-unpaid-due-date");
+                globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.NEXT_PAYMENT_DUE_DATE,
+                        new PutGlobalConfigurationsRequest().stringValue("next-unpaid-due-date"));
                 // Create Client
                 Long clientId = clientHelper.createClient(ClientHelper.defaultClientCreationRequest()).getClientId();
 
@@ -122,8 +122,8 @@ public class LoanDelinquencyDetailsNextPaymentDateConfigurationTest extends Base
 
             } finally {
                 // reset global config
-                GlobalConfigurationHelper.updateLoanNextPaymentDateConfiguration(this.requestSpec, this.responseSpec,
-                        "earliest-unpaid-date");
+                globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.NEXT_PAYMENT_DUE_DATE,
+                        new PutGlobalConfigurationsRequest().stringValue("earliest-unpaid-date"));
             }
 
         });
@@ -134,8 +134,8 @@ public class LoanDelinquencyDetailsNextPaymentDateConfigurationTest extends Base
         runAt("01 November 2023", () -> {
             try {
                 // update Global configuration for next payment date
-                GlobalConfigurationHelper.updateLoanNextPaymentDateConfiguration(this.requestSpec, this.responseSpec,
-                        "next-unpaid-due-date");
+                globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.NEXT_PAYMENT_DUE_DATE,
+                        new PutGlobalConfigurationsRequest().stringValue("next-unpaid-due-date"));
                 // Create Client
                 Long clientId = clientHelper.createClient(ClientHelper.defaultClientCreationRequest()).getClientId();
 
@@ -237,8 +237,8 @@ public class LoanDelinquencyDetailsNextPaymentDateConfigurationTest extends Base
                         .dateFormat(DATETIME_PATTERN).locale("en"));
             } finally {
                 // reset global config
-                GlobalConfigurationHelper.updateLoanNextPaymentDateConfiguration(this.requestSpec, this.responseSpec,
-                        "earliest-unpaid-date");
+                globalConfigurationHelper.updateGlobalConfiguration(GlobalConfigurationConstants.NEXT_PAYMENT_DUE_DATE,
+                        new PutGlobalConfigurationsRequest().stringValue("earliest-unpaid-date"));
             }
 
         });

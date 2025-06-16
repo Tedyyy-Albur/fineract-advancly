@@ -18,14 +18,15 @@
  */
 package org.apache.fineract.infrastructure.core.service;
 
-import static org.apache.commons.collections4.CollectionUtils.isEmpty;
+import lombok.Data;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import lombok.Data;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
+
+import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 
 @Data
 public class PagedRequest<T> {

@@ -18,8 +18,9 @@
  */
 package org.apache.fineract.infrastructure.dataqueries.data;
 
-import java.util.List;
 import org.apache.fineract.infrastructure.core.service.database.JdbcJavaType;
+
+import java.util.List;
 
 /**
  * Immutable data object for generic resultset data.

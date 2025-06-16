@@ -25,6 +25,9 @@ import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.domain.ExternalId;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+import java.util.Objects;
+
 @Component
 @RequiredArgsConstructor
 public class ExternalIdFactory {
@@ -33,6 +36,11 @@ public class ExternalIdFactory {
 
     public static ExternalId produce(String value) {
         return StringUtils.isBlank(value) ? ExternalId.empty() : new ExternalId(value);
+    }
+
+    public static List<ExternalId> produce(List<String> values) {
+        Objects.requireNonNull(values, "values must not be null");
+        return values.stream().map(ExternalIdFactory::produce).toList();
     }
 
     public ExternalId createFromCommand(JsonCommand command, final String externalIdKey) {

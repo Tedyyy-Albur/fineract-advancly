@@ -18,10 +18,11 @@
  */
 package org.apache.fineract.infrastructure.core.config.jpa;
 
+import org.springframework.orm.jpa.persistenceunit.PersistenceUnitPostProcessor;
+
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
-import org.springframework.orm.jpa.persistenceunit.PersistenceUnitPostProcessor;
 
 /**
  * A customizer interface for the EntityManager factories. Register an implementation of this interface as a Spring

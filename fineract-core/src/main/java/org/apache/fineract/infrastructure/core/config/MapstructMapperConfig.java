@@ -19,11 +19,7 @@
 package org.apache.fineract.infrastructure.core.config;
 
 import org.apache.fineract.infrastructure.event.external.service.serialization.mapper.support.ExternalIdMapper;
-import org.mapstruct.Builder;
-import org.mapstruct.InjectionStrategy;
-import org.mapstruct.MapperConfig;
-import org.mapstruct.MappingConstants;
-import org.mapstruct.ReportingPolicy;
+import org.mapstruct.*;
 
 @MapperConfig(componentModel = MappingConstants.ComponentModel.SPRING, unmappedTargetPolicy = ReportingPolicy.ERROR, builder = @Builder(disableBuilder = true), uses = {
         ExternalIdMapper.class }, injectionStrategy = InjectionStrategy.CONSTRUCTOR)

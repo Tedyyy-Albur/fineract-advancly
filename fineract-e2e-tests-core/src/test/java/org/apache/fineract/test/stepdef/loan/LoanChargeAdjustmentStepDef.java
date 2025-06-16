@@ -21,13 +21,15 @@ package org.apache.fineract.test.stepdef.loan;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.gson.Gson;
+import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.fineract.client.models.BusinessDateResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.fineract.client.models.BusinessDateData;
 import org.apache.fineract.client.models.GetLoansLoanIdLoanChargeData;
 import org.apache.fineract.client.models.GetLoansLoanIdResponse;
 import org.apache.fineract.client.models.GetLoansLoanIdTransactions;
@@ -46,11 +48,14 @@ import org.apache.fineract.test.factory.LoanRequestFactory;
 import org.apache.fineract.test.helper.ErrorHelper;
 import org.apache.fineract.test.helper.ErrorMessageHelper;
 import org.apache.fineract.test.helper.ErrorResponse;
+import org.apache.fineract.test.messaging.event.EventCheckHelper;
+import org.apache.fineract.test.messaging.store.EventStore;
 import org.apache.fineract.test.stepdef.AbstractStepDef;
 import org.apache.fineract.test.support.TestContextKey;
 import org.springframework.beans.factory.annotation.Autowired;
 import retrofit2.Response;
 
+@Slf4j
 public class LoanChargeAdjustmentStepDef extends AbstractStepDef {
 
     public static final String DATE_FORMAT = "dd MMMM yyyy";
@@ -65,6 +70,10 @@ public class LoanChargeAdjustmentStepDef extends AbstractStepDef {
     private LoanTransactionsApi loanTransactionsApi;
     @Autowired
     private BusinessDateManagementApi businessDateManagementApi;
+    @Autowired
+    private EventCheckHelper eventCheckHelper;
+    @Autowired
+    private EventStore eventStore;
 
     @When("Admin makes a charge adjustment for the last {string} type charge which is due on {string} with {double} EUR transaction amount and externalId {string}")
     public void makeLoanChargeAdjustment(String chargeTypeEnum, String date, Double transactionAmount, String externalId)
@@ -79,8 +88,8 @@ public class LoanChargeAdjustmentStepDef extends AbstractStepDef {
         makeChargeAdjustmentCall(loanId, transactionId, externalId, transactionAmount);
     }
 
-    @When("Admin makes a charge adjustment for the last {string} type charge which is due on {string} with transaction amount higher than the available charge amount")
-    public void loanChargeAdjustmentFailedOnWrongAmount(String chargeTypeEnum, String date) throws IOException {
+    @Then("Charge adjustment for the last {string} type charge which is due on {string} with transaction amount {double} which is higher than the available charge amount results an ERROR")
+    public void loanChargeAdjustmentFailedOnWrongAmount(String chargeTypeEnum, String date, double amount) throws IOException {
         Response<PostLoansResponse> loanResponse = testContext().get(TestContextKey.LOAN_CREATE_RESPONSE);
         long loanId = loanResponse.body().getLoanId();
 
@@ -88,7 +97,7 @@ public class LoanChargeAdjustmentStepDef extends AbstractStepDef {
         ErrorHelper.checkSuccessfulApiCall(loanDetailsResponse);
 
         Long transactionId = getTransactionIdForLastChargeMetConditions(chargeTypeEnum, date, loanDetailsResponse);
-        PostLoansLoanIdChargesChargeIdRequest chargeAdjustmentRequest = LoanRequestFactory.defaultChargeAdjustmentRequest().amount(8.0)
+        PostLoansLoanIdChargesChargeIdRequest chargeAdjustmentRequest = LoanRequestFactory.defaultChargeAdjustmentRequest().amount(amount)
                 .externalId("");
 
         Response<PostLoansLoanIdChargesChargeIdResponse> chargeAdjustmentResponseFail = loanChargesApi
@@ -108,6 +117,9 @@ public class LoanChargeAdjustmentStepDef extends AbstractStepDef {
         assertThat(developerMessageActual)
                 .as(ErrorMessageHelper.wrongErrorMessageInFailedChargeAdjustment(developerMessageActual, developerMessageExpected))
                 .isEqualTo(developerMessageExpected);
+
+        log.debug("Error code: {}", httpStatusCodeActual);
+        log.debug("Error message: {}", developerMessageActual);
     }
 
     @When("Admin reverts the charge adjustment which was raised on {string} with {double} EUR transaction amount")
@@ -120,7 +132,7 @@ public class LoanChargeAdjustmentStepDef extends AbstractStepDef {
 
         Long transactionId = getTransactionIdForTransactionMetConditions(transactionDate, transactionAmount, loanDetailsResponse);
 
-        Response<List<BusinessDateResponse>> businessDateResponse = businessDateManagementApi.getBusinessDates().execute();
+        Response<List<BusinessDateData>> businessDateResponse = businessDateManagementApi.getBusinessDates().execute();
         LocalDate businessDate = businessDateResponse.body().get(0).getDate();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_FORMAT);
         String businessDateActual = formatter.format(businessDate);
@@ -133,6 +145,13 @@ public class LoanChargeAdjustmentStepDef extends AbstractStepDef {
         ErrorHelper.checkSuccessfulApiCall(chargeAdjustmentUndoResponse);
     }
 
+    @Then("Charge adjustment response has the subResourceExternalId")
+    public void checkChargeAdjustmentResponse() {
+        final Response<PostLoansLoanIdChargesChargeIdResponse> response = testContext().get(TestContextKey.LOAN_CHARGE_ADJUSTMENT_RESPONSE);
+        final PostLoansLoanIdChargesChargeIdResponse body = response.body();
+        assertThat(body.getSubResourceExternalId()).isNotNull();
+    }
+
     private Long getTransactionIdForTransactionMetConditions(String transactionDate, double transactionAmount,
             Response<GetLoansLoanIdResponse> loanDetailsResponse) {
         List<GetLoansLoanIdTransactions> transactions = loanDetailsResponse.body().getTransactions();
@@ -142,7 +161,7 @@ public class LoanChargeAdjustmentStepDef extends AbstractStepDef {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_FORMAT);
             String dateActual = formatter.format(date);
 
-            Double amountActual = transactions.get(i).getAmount();
+            Double amountActual = transactions.get(i).getAmount().doubleValue();
 
             if (dateActual.equals(transactionDate) && amountActual.equals(transactionAmount)) {
                 transactionMetConditions = transactions.get(i);
@@ -153,6 +172,7 @@ public class LoanChargeAdjustmentStepDef extends AbstractStepDef {
     }
 
     private void makeChargeAdjustmentCall(Long loanId, Long transactionId, String externalId, double transactionAmount) throws IOException {
+        eventStore.reset();
         PostLoansLoanIdChargesChargeIdRequest chargeAdjustmentRequest = LoanRequestFactory.defaultChargeAdjustmentRequest()
                 .amount(transactionAmount).externalId(externalId);
 
@@ -160,6 +180,7 @@ public class LoanChargeAdjustmentStepDef extends AbstractStepDef {
                 .executeLoanCharge2(loanId, transactionId, chargeAdjustmentRequest, "adjustment").execute();
         testContext().set(TestContextKey.LOAN_CHARGE_ADJUSTMENT_RESPONSE, chargeAdjustmentResponse);
         ErrorHelper.checkSuccessfulApiCall(chargeAdjustmentResponse);
+        eventCheckHelper.loanBalanceChangedEventCheck(loanId);
     }
 
     private Long getTransactionIdForLastChargeMetConditions(String chargeTypeEnum, String date,

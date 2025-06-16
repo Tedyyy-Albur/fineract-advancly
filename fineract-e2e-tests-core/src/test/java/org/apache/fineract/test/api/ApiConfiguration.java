@@ -18,6 +18,7 @@
  */
 package org.apache.fineract.test.api;
 
+import lombok.RequiredArgsConstructor;
 import org.apache.fineract.client.services.BatchApiApi;
 import org.apache.fineract.client.services.BusinessDateManagementApi;
 import org.apache.fineract.client.services.BusinessStepConfigurationApi;
@@ -29,6 +30,7 @@ import org.apache.fineract.client.services.CurrencyApi;
 import org.apache.fineract.client.services.DataTablesApi;
 import org.apache.fineract.client.services.DefaultApi;
 import org.apache.fineract.client.services.DelinquencyRangeAndBucketsManagementApi;
+import org.apache.fineract.client.services.ExternalAssetOwnerLoanProductAttributesApi;
 import org.apache.fineract.client.services.ExternalAssetOwnersApi;
 import org.apache.fineract.client.services.ExternalEventConfigurationApi;
 import org.apache.fineract.client.services.FundsApi;
@@ -39,6 +41,8 @@ import org.apache.fineract.client.services.JournalEntriesApi;
 import org.apache.fineract.client.services.LoanAccountLockApi;
 import org.apache.fineract.client.services.LoanChargesApi;
 import org.apache.fineract.client.services.LoanCobCatchUpApi;
+import org.apache.fineract.client.services.LoanDisbursementDetailsApi;
+import org.apache.fineract.client.services.LoanInterestPauseApi;
 import org.apache.fineract.client.services.LoanProductsApi;
 import org.apache.fineract.client.services.LoanTransactionsApi;
 import org.apache.fineract.client.services.LoansApi;
@@ -53,15 +57,15 @@ import org.apache.fineract.client.services.SchedulerApi;
 import org.apache.fineract.client.services.SchedulerJobApi;
 import org.apache.fineract.client.services.UsersApi;
 import org.apache.fineract.client.util.FineractClient;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.fineract.test.stepdef.loan.LoanProductsCustomApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
+@RequiredArgsConstructor
 public class ApiConfiguration {
 
-    @Autowired
-    private FineractClient fineractClient;
+    private final FineractClient fineractClient;
 
     @Bean
     public SchedulerApi schedulerApi() {
@@ -96,6 +100,11 @@ public class ApiConfiguration {
     @Bean
     public LoanProductsApi loanProductsApi() {
         return fineractClient.createService(LoanProductsApi.class);
+    }
+
+    @Bean
+    public LoanProductsCustomApi loanProductsCustomApi() {
+        return fineractClient.createService(LoanProductsCustomApi.class);
     }
 
     @Bean
@@ -209,6 +218,11 @@ public class ApiConfiguration {
     }
 
     @Bean
+    public ExternalAssetOwnerLoanProductAttributesApi externalAssetOwnerLoanProductAttributesApi() {
+        return fineractClient.createService(ExternalAssetOwnerLoanProductAttributesApi.class);
+    }
+
+    @Bean
     public BusinessStepConfigurationApi businessStepConfigurationApi() {
         return fineractClient.createService(BusinessStepConfigurationApi.class);
     }
@@ -231,5 +245,15 @@ public class ApiConfiguration {
     @Bean
     public RescheduleLoansApi rescheduleLoansApi() {
         return fineractClient.createService(RescheduleLoansApi.class);
+    }
+
+    @Bean
+    public LoanInterestPauseApi loanInterestPauseApi() {
+        return fineractClient.createService(LoanInterestPauseApi.class);
+    }
+
+    @Bean
+    public LoanDisbursementDetailsApi loanDisbursementDetailsApi() {
+        return fineractClient.createService(LoanDisbursementDetailsApi.class);
     }
 }

@@ -18,10 +18,11 @@
  */
 package org.apache.fineract.infrastructure.configuration.data;
 
-import java.util.List;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
+
+import java.util.List;
 
 /**
  * Immutable data object for global configuration.

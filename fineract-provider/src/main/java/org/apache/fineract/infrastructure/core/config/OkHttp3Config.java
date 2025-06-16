@@ -19,18 +19,20 @@
 
 package org.apache.fineract.infrastructure.core.config;
 
-import java.security.SecureRandom;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.OkHttpClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import java.time.Duration;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -41,7 +43,10 @@ public class OkHttp3Config {
 
     @Bean
     public OkHttpClient okHttpClient() throws Exception {
-        var okBuilder = new OkHttpClient.Builder();
+        var okBuilder = new OkHttpClient.Builder()//
+                .connectTimeout(Duration.ofSeconds(fineractProperties.getClientConnectTimeout()))//
+                .readTimeout(Duration.ofSeconds(fineractProperties.getClientReadTimeout()))//
+                .writeTimeout(Duration.ofSeconds(fineractProperties.getClientWriteTimeout())); //
 
         if (Boolean.TRUE.equals(fineractProperties.getInsecureHttpClient())) {
             final X509TrustManager insecureX509TrustManager = new X509TrustManager() {

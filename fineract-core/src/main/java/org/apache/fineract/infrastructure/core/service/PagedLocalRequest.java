@@ -18,12 +18,13 @@
  */
 package org.apache.fineract.infrastructure.core.service;
 
-import java.util.Locale;
-import java.util.Objects;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.apache.fineract.infrastructure.core.serialization.JsonParserHelper;
+
+import java.util.Locale;
+import java.util.Objects;
 
 @Getter
 @Setter

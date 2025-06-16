@@ -18,9 +18,10 @@
  */
 package org.apache.fineract.infrastructure.core.service.database;
 
+import org.springframework.jdbc.support.rowset.SqlRowSet;
+
 import java.util.ArrayList;
 import java.util.List;
-import org.springframework.jdbc.support.rowset.SqlRowSet;
 
 public final class DatabaseIndexMapper {
 

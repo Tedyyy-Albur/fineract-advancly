@@ -19,13 +19,6 @@
 
 package org.apache.fineract.infrastructure.core.config;
 
-import static org.apache.fineract.infrastructure.security.vote.SelfServiceUserAuthorizationManager.selfServiceUserAuthManager;
-import static org.springframework.security.authorization.AuthenticatedAuthorizationManager.fullyAuthenticated;
-import static org.springframework.security.authorization.AuthorityAuthorizationManager.hasAuthority;
-import static org.springframework.security.authorization.AuthorizationManagers.allOf;
-import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
-
-import java.util.Collection;
 import org.apache.fineract.infrastructure.businessdate.service.BusinessDateReadPlatformService;
 import org.apache.fineract.infrastructure.cache.service.CacheWritePlatformService;
 import org.apache.fineract.infrastructure.configuration.domain.ConfigurationDomainService;
@@ -47,8 +40,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authorization.AuthorizationManager;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -61,8 +56,19 @@ import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.context.SecurityContextHolderFilter;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+import static org.apache.fineract.infrastructure.security.vote.SelfServiceUserAuthorizationManager.selfServiceUserAuthManager;
+import static org.springframework.security.authorization.AuthenticatedAuthorizationManager.fullyAuthenticated;
+import static org.springframework.security.authorization.AuthorityAuthorizationManager.hasAuthority;
+import static org.springframework.security.authorization.AuthorizationManagers.allOf;
+import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
 
 @Configuration
 @ConditionalOnProperty("fineract.security.oauth.enabled")
@@ -101,17 +107,25 @@ public class OAuth2SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http //
                 .securityMatcher(antMatcher("/api/**")).authorizeHttpRequests((auth) -> {
+                    List<AuthorizationManager<RequestAuthorizationContext>> authorizationManagers = new ArrayList<>();
+                    authorizationManagers.add(fullyAuthenticated());
+                    authorizationManagers.add(hasAuthority("TWOFACTOR_AUTHENTICATED"));
+                    if (fineractProperties.getModule().getSelfService().isEnabled()) {
+                        auth.requestMatchers(antMatcher(HttpMethod.POST, "/api/*/self/authentication")).permitAll() //
+                                .requestMatchers(antMatcher(HttpMethod.POST, "/api/*/self/registration")).permitAll() //
+                                .requestMatchers(antMatcher(HttpMethod.POST, "/api/*/self/registration/user")).permitAll(); //
+                        authorizationManagers.add(selfServiceUserAuthManager());
+                    }
+
                     auth.requestMatchers(antMatcher(HttpMethod.OPTIONS, "/api/**")).permitAll() //
                             .requestMatchers(antMatcher(HttpMethod.POST, "/api/*/echo")).permitAll() //
                             .requestMatchers(antMatcher(HttpMethod.POST, "/api/*/authentication")).permitAll() //
-                            .requestMatchers(antMatcher(HttpMethod.POST, "/api/*/self/authentication")).permitAll() //
-                            .requestMatchers(antMatcher(HttpMethod.POST, "/api/*/self/registration")).permitAll() //
-                            .requestMatchers(antMatcher(HttpMethod.POST, "/api/*/self/registration/user")).permitAll() //
                             .requestMatchers(antMatcher(HttpMethod.POST, "/api/*/twofactor/validate")).fullyAuthenticated() //
                             .requestMatchers(antMatcher("/api/*/twofactor")).fullyAuthenticated() //
                             .requestMatchers(antMatcher("/api/**"))
-                            .access(allOf(fullyAuthenticated(), hasAuthority("TWOFACTOR_AUTHENTICATED"), selfServiceUserAuthManager())); //
-                }).csrf((csrf) -> csrf.disable()) // NOSONAR only creating a service that is used by non-browser clients
+                            .access(allOf(authorizationManagers.toArray(new AuthorizationManager[0]))); //
+                }).csrf(AbstractHttpConfigurer::disable) // NOSONAR only creating a service that is used by non-browser
+                                                         // clients
                 .exceptionHandling((ehc) -> ehc.authenticationEntryPoint(new OAuth2ExceptionEntryPoint()))
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(authenticationConverter()))
                         .authenticationEntryPoint(new OAuth2ExceptionEntryPoint())) //
@@ -128,6 +142,10 @@ public class OAuth2SecurityConfig {
             http.requiresChannel(channel -> channel.requestMatchers(antMatcher("/api/**")).requiresSecure());
         }
 
+        if (fineractProperties.getSecurity().getHsts().isEnabled()) {
+            http.requiresChannel(channel -> channel.anyRequest().requiresSecure()).headers(
+                    headers -> headers.httpStrictTransportSecurity(hsts -> hsts.includeSubDomains(true).maxAgeInSeconds(31536000)));
+        }
         return http.build();
     }
 

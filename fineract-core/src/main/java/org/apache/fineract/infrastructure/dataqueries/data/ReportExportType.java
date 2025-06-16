@@ -18,9 +18,10 @@
  */
 package org.apache.fineract.infrastructure.dataqueries.data;
 
-import java.io.Serializable;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+
+import java.io.Serializable;
 
 @Data
 @RequiredArgsConstructor

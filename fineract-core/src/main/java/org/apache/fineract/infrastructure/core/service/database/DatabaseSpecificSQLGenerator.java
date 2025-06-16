@@ -18,14 +18,7 @@
  */
 package org.apache.fineract.infrastructure.core.service.database;
 
-import static java.lang.String.format;
-
 import jakarta.validation.constraints.NotNull;
-import java.math.BigInteger;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 import org.apache.fineract.infrastructure.core.service.DateUtils;
 import org.apache.fineract.infrastructure.dataqueries.data.ResultsetColumnHeaderData;
 import org.apache.logging.log4j.util.Strings;
@@ -33,6 +26,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Component;
+
+import java.math.BigInteger;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import static java.lang.String.format;
 
 @Component
 public class DatabaseSpecificSQLGenerator {
@@ -161,7 +162,7 @@ public class DatabaseSpecificSQLGenerator {
 
     public String castChar(String sql) {
         if (databaseTypeResolver.isMySQL()) {
-            return format("CAST(%s AS CHAR)", sql);
+            return format("CAST(%s AS CHAR) COLLATE utf8mb4_unicode_ci", sql);
         } else if (databaseTypeResolver.isPostgreSQL()) {
             return format("%s::CHAR", sql);
         } else {
@@ -289,4 +290,13 @@ public class DatabaseSpecificSQLGenerator {
             }
         };
     }
+
+    public String incrementDateByOneDay(String dateColumn) {
+        return switch (getDialect()) {
+            case POSTGRESQL -> " " + dateColumn + "+1";
+            case MYSQL -> " DATE_ADD(" + dateColumn + ", INTERVAL 1 DAY) ";
+        };
+
+    }
+
 }

@@ -18,10 +18,11 @@
  */
 package org.apache.fineract.infrastructure.dataqueries.data;
 
+import org.apache.fineract.infrastructure.core.data.EnumOptionData;
+
 import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
-import org.apache.fineract.infrastructure.core.data.EnumOptionData;
 
 public enum StatusEnum {
 

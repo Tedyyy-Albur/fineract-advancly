@@ -18,11 +18,11 @@
  */
 package org.apache.fineract.infrastructure.event.business.domain;
 
-import static java.util.stream.Collectors.toSet;
-
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+
+import static java.util.stream.Collectors.toSet;
 
 public class BulkBusinessEvent extends AbstractBusinessEvent<List<BusinessEvent<?>>> {
 

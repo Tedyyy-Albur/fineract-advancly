@@ -130,6 +130,7 @@ public class ProductToGLAccountMappingWritePlatformServiceImpl implements Produc
                 // advanced accounting mappings
                 this.loanProductToGLAccountMappingHelper.savePaymentChannelToFundSourceMappings(command, element, loanProductId, null);
                 this.loanProductToGLAccountMappingHelper.saveChargesToIncomeAccountMappings(command, element, loanProductId, null);
+                this.loanProductToGLAccountMappingHelper.saveChargeOffReasonToExpenseAccountMappings(command, element, loanProductId, null);
             break;
             case ACCRUAL_UPFRONT:
                 // Fall Through
@@ -186,6 +187,9 @@ public class ProductToGLAccountMappingWritePlatformServiceImpl implements Produc
                 this.loanProductToGLAccountMappingHelper.saveLoanToIncomeAccountMapping(element,
                         LoanProductAccountingParams.INCOME_FROM_GOODWILL_CREDIT_PENALTY.getValue(), loanProductId,
                         AccrualAccountsForLoan.INCOME_FROM_GOODWILL_CREDIT_PENALTY.getValue());
+                this.loanProductToGLAccountMappingHelper.saveLoanToIncomeAccountMapping(element,
+                        LoanProductAccountingParams.INCOME_FROM_CAPITALIZATION.getValue(), loanProductId,
+                        AccrualAccountsForLoan.INCOME_FROM_CAPITALIZATION.getValue());
 
                 // expenses
                 this.loanProductToGLAccountMappingHelper.saveLoanToExpenseAccountMapping(element,
@@ -204,10 +208,14 @@ public class ProductToGLAccountMappingWritePlatformServiceImpl implements Produc
                 // liabilities
                 this.loanProductToGLAccountMappingHelper.saveLoanToLiabilityAccountMapping(element,
                         LoanProductAccountingParams.OVERPAYMENT.getValue(), loanProductId, AccrualAccountsForLoan.OVERPAYMENT.getValue());
+                this.loanProductToGLAccountMappingHelper.saveLoanToLiabilityAccountMapping(element,
+                        LoanProductAccountingParams.DEFERRED_INCOME_LIABILITY.getValue(), loanProductId,
+                        AccrualAccountsForLoan.DEFERRED_INCOME_LIABILITY.getValue());
 
                 // advanced accounting mappings
                 this.loanProductToGLAccountMappingHelper.savePaymentChannelToFundSourceMappings(command, element, loanProductId, null);
                 this.loanProductToGLAccountMappingHelper.saveChargesToIncomeAccountMappings(command, element, loanProductId, null);
+                this.loanProductToGLAccountMappingHelper.saveChargeOffReasonToExpenseAccountMappings(command, element, loanProductId, null);
             break;
         }
     }
@@ -361,13 +369,12 @@ public class ProductToGLAccountMappingWritePlatformServiceImpl implements Produc
     @Override
     @Transactional
     public Map<String, Object> updateLoanProductToGLAccountMapping(final Long loanProductId, final JsonCommand command,
-            final boolean accountingRuleChanged, final int accountingRuleTypeId) {
+            final boolean accountingRuleChanged, final AccountingRuleType accountingRuleType) {
         /***
          * Variable tracks all accounting mapping properties that have been updated
          ***/
         Map<String, Object> changes = new HashMap<>();
         final JsonElement element = this.fromApiJsonHelper.parse(command.json());
-        final AccountingRuleType accountingRuleType = AccountingRuleType.fromInt(accountingRuleTypeId);
 
         /***
          * If the accounting rule has been changed, delete all existing mapping for the product and recreate a new set
@@ -385,6 +392,8 @@ public class ProductToGLAccountMappingWritePlatformServiceImpl implements Produc
                     accountingRuleType);
             this.loanProductToGLAccountMappingHelper.updatePaymentChannelToFundSourceMappings(command, element, loanProductId, changes);
             this.loanProductToGLAccountMappingHelper.updateChargesToIncomeAccountMappings(command, element, loanProductId, changes);
+            this.loanProductToGLAccountMappingHelper.updateChargeOffReasonToExpenseAccountMappings(command, element, loanProductId,
+                    changes);
         }
         return changes;
     }

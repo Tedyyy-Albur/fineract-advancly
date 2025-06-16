@@ -18,14 +18,13 @@
  */
 package org.apache.fineract.infrastructure.core.service.database;
 
-import static java.lang.String.format;
-
-import java.util.List;
-import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
+
+import javax.sql.DataSource;
+import java.util.List;
 
 @Component
 public class MySQLQueryService implements DatabaseQueryService {
@@ -45,8 +44,7 @@ public class MySQLQueryService implements DatabaseQueryService {
     @Override
     public boolean isTablePresent(DataSource dataSource, String tableName) {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-        SqlRowSet rs = jdbcTemplate.queryForRowSet(format("SHOW TABLES LIKE '%s'", tableName));
-        return rs.next();
+        return jdbcTemplate.queryForRowSet("SHOW TABLES LIKE ?", tableName).next();
     }
 
     @Override

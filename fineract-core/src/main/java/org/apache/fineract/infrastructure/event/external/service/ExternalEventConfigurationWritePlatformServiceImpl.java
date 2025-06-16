@@ -18,10 +18,6 @@
  */
 package org.apache.fineract.infrastructure.event.external.service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import lombok.AllArgsConstructor;
 import org.apache.fineract.infrastructure.core.api.JsonCommand;
 import org.apache.fineract.infrastructure.core.data.CommandProcessingResult;
@@ -32,6 +28,11 @@ import org.apache.fineract.infrastructure.event.external.repository.domain.Exter
 import org.apache.fineract.infrastructure.event.external.serialization.ExternalEventConfigurationCommandFromApiJsonDeserializer;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @AllArgsConstructor
@@ -44,7 +45,7 @@ public class ExternalEventConfigurationWritePlatformServiceImpl implements Exter
     @Override
     public CommandProcessingResult updateConfigurations(final JsonCommand command) {
         final ExternalEventConfigurationCommand configurationCommand = fromApiJsonDeserializer.commandFromApiJson(command.json());
-        final Map<String, Boolean> commandConfigurations = configurationCommand.getExternalEventConfigurations();
+        final Map<String, Boolean> commandConfigurations = configurationCommand.externalEventConfigurations();
         final Map<String, Object> changes = new HashMap<>();
         final Map<String, Boolean> changedConfigurations = new HashMap<>();
         final List<ExternalEventConfiguration> modifiedConfigurations = new ArrayList<>();

@@ -26,9 +26,9 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.fineract.client.models.GetLoanAccountLockResponse;
-import org.apache.fineract.client.models.GetOldestCOBProcessedLoanResponse;
 import org.apache.fineract.client.models.LoanAccountLock;
+import org.apache.fineract.client.models.LoanAccountLockResponseDTO;
+import org.apache.fineract.client.models.OldestCOBProcessedLoanDTO;
 import org.apache.fineract.client.models.PostLoansResponse;
 import org.apache.fineract.client.services.DefaultApi;
 import org.apache.fineract.client.services.LoanAccountLockApi;
@@ -54,14 +54,14 @@ public class LoanCOBStepDef extends AbstractStepDef {
 
     @Then("The cobProcessedDate of the oldest loan processed by COB is more than 1 day earlier than cobBusinessDate")
     public void checkOldestCOBProcessed() throws IOException {
-        Response<GetOldestCOBProcessedLoanResponse> response = loanCobCatchUpApi.getOldestCOBProcessedLoan().execute();
+        Response<OldestCOBProcessedLoanDTO> response = loanCobCatchUpApi.getOldestCOBProcessedLoan().execute();
         ErrorHelper.checkSuccessfulApiCall(response);
 
         LocalDate cobDate = response.body().getCobBusinessDate();
         LocalDate cobDateMinusOne = cobDate.minusDays(1);
         LocalDate cobProcessedDate = response.body().getCobProcessedDate();
-        log.info("cobDateMinusOne: {}", cobDateMinusOne);
-        log.info("cobProcessedDate: {}", cobProcessedDate);
+        log.debug("cobDateMinusOne: {}", cobDateMinusOne);
+        log.debug("cobProcessedDate: {}", cobProcessedDate);
 
         boolean result = cobDateMinusOne.isAfter(cobProcessedDate);
         assertThat(result).as(ErrorMessageHelper.wrongLastCOBProcessedLoanDate(cobProcessedDate, cobDateMinusOne)).isTrue();
@@ -69,12 +69,12 @@ public class LoanCOBStepDef extends AbstractStepDef {
 
     @Then("There are no locked loan accounts")
     public void listOfLockedLoansEmpty() throws IOException {
-        Response<GetLoanAccountLockResponse> response = loanAccountLockApi.retrieveLockedAccounts(0, 1000).execute();
+        Response<LoanAccountLockResponseDTO> response = loanAccountLockApi.retrieveLockedAccounts(0, 1000).execute();
         ErrorHelper.checkSuccessfulApiCall(response);
 
         int size = response.body().getContent().size();
         assertThat(size).as(ErrorMessageHelper.listOfLockedLoansNotEmpty(response)).isEqualTo(0);
-        log.info("Size of List of the locked loans: {}", size);
+        log.debug("Size of List of the locked loans: {}", size);
     }
 
     @Then("The loan account is not locked")
@@ -82,7 +82,7 @@ public class LoanCOBStepDef extends AbstractStepDef {
         Response<PostLoansResponse> loanResponse = testContext().get(TestContextKey.LOAN_CREATE_RESPONSE);
         Long targetLoanId = loanResponse.body().getLoanId();
 
-        Response<GetLoanAccountLockResponse> response = loanAccountLockApi.retrieveLockedAccounts(0, 1000).execute();
+        Response<LoanAccountLockResponseDTO> response = loanAccountLockApi.retrieveLockedAccounts(0, 1000).execute();
         ErrorHelper.checkSuccessfulApiCall(response);
 
         List<LoanAccountLock> content = response.body().getContent();

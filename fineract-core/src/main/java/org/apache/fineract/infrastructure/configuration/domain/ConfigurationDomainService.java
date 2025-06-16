@@ -18,8 +18,9 @@
  */
 package org.apache.fineract.infrastructure.configuration.domain;
 
-import java.time.LocalDate;
 import org.apache.fineract.infrastructure.cache.domain.CacheType;
+
+import java.time.LocalDate;
 
 public interface ConfigurationDomainService {
 
@@ -143,4 +144,7 @@ public interface ConfigurationDomainService {
 
     String getNextPaymentDateConfigForLoan();
 
+    boolean isImmediateChargeAccrualPostMaturityEnabled();
+
+    String getAssetOwnerTransferOustandingInterestStrategy();
 }

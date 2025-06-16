@@ -163,4 +163,44 @@
     <include file="parts/0140_trial_balance_with_asset_transfer_update.xml" relativeToChangelogFile="true" />
     <include file="parts/0141_add_interest_payment_waiver_transaction_type.xml" relativeToChangelogFile="true" />
     <include file="parts/0142_add_column_ip.xml" relativeToChangelogFile="true" />
+    <include file="parts/0142_add_accrual_activity_transaction.xml" relativeToChangelogFile="true" />
+    <include file="parts/0143_add_accrual_activity_posting_job.xml" relativeToChangelogFile="true" />
+    <include file="parts/0144_transaction_summary_with_asset_owner_report_unc_allocation_fix.xml" relativeToChangelogFile="true" />
+    <include file="parts/0145_job_short_name.xml" relativeToChangelogFile="true" />
+    <include file="parts/0147_enable_payment_hub_integration.xml" relativeToChangelogFile="true" />
+    <include file="parts/0148_transaction_summary_with_asset_owner_report_performance_improvement.xml" relativeToChangelogFile="true" />
+    <include file="parts/0149_update_global_configuration_names.xml" relativeToChangelogFile="true" />
+    <include file="parts/0150_transaction_summary_with_asset_owner_report_interest_waiver_interest_refund_added.xml" relativeToChangelogFile="true" />
+    <include file="parts/0151_interest_refund_business_events.xml" relativeToChangelogFile="true" />
+    <include file="parts/0152_update_password_validation_policy.xml" relativeToChangelogFile="true" />
+    <include file="parts/0153_add_charge_off_reason_id_to_acc_product_mapping.xml" relativeToChangelogFile="true" />
+    <include file="parts/0154_add_interest_refund_to_r_enum_value.xml" relativeToChangelogFile="true" />
+    <include file="parts/0155_add_configuration_enable_immediate_charge_accrual_post_maturity.xml" relativeToChangelogFile="true" />
+    <include file="parts/0156_add_disallow_interest_calc_on_past_due_field.xml" relativeToChangelogFile="true" />
+    <include file="parts/0157_create_index_m_loan_transaction_relation.xml" relativeToChangelogFile="true" />
+    <include file="parts/0158_create_acc_gl_journal_entry_annual_summary.xml" relativeToChangelogFile="true" />
+    <include file="parts/0159_trial_balance_summary_with_asset_owner_year_end_summary.xml" relativeToChangelogFile="true" />
+    <include file="parts/0160_add_acc_product_mapping_product_id_index.xml" relativeToChangelogFile="true" />
+    <include file="parts/0161_add_loan_external_id_to_commands.xml" relativeToChangelogFile="true" />
+    <include file="parts/0162_add_additional_audit_fields_to_term_variations.xml" relativeToChangelogFile="true" />
+    <include file="parts/0163_transaction_summary_with_asset_owner_report_accrual_adj_merged_with_accrual.xml" relativeToChangelogFile="true" />
+    <include file="parts/0164_transaction_summary_with_asset_owner_report_accrual_adj_report_separately_and_exclude_accrual_activity.xml" relativeToChangelogFile="true" />
+    <include file="parts/0165_add_credited_interest_to_instalment.xml" relativeToChangelogFile="true" />
+    <include file="parts/0166_transaction_summary_with_asset_owner_report_charge_adjustment_fix.xml" relativeToChangelogFile="true" />
+    <include file="parts/0167_create_m_calendar_instance_index.xml" relativeToChangelogFile="true" />
+    <include file="parts/0168_transaction_summary_with_asset_owner_report_add_active_intermediate_filtering.xml" relativeToChangelogFile="true" />
+    <include file="parts/0169_add_missing_permissions.xml" relativeToChangelogFile="true" />
+    <include file="parts/0170_days_in_year_custom_strategy.xml" relativeToChangelogFile="true"/>
+    <include file="parts/0171_loan_capitalized_income.xml" relativeToChangelogFile="true"/>
+    <include file="parts/0172_create_loan_capitalized_income_balance.xml" relativeToChangelogFile="true"/>
+    <include file="parts/0173_user_change_pwd.xml" relativeToChangelogFile="true" />
+    <include file="parts/0174_loan_product_add_capitalized_income_type.xml" relativeToChangelogFile="true" />
+    <include file="parts/0175_add_fk_acc_product_mapping.xml" relativeToChangelogFile="true" />
+    <include file="parts/0176_add_capitalized_income_amortization_transaction.xml" relativeToChangelogFile="true" />
+    <include file="parts/0177_acc_journal_entry_index.xml" relativeToChangelogFile="true" />
+    <include file="parts/0178_add_principal_from_capitalized_income_to_loan_summary.xml" relativeToChangelogFile="true" />
+    <include file="parts/0179_add_capitalized_income_adjustment_transaction.xml" relativeToChangelogFile="true" />
+    <include file="parts/0180_add_version_field_to_loan_transaction.xml" relativeToChangelogFile="true" />
+    <include file="parts/0181_add_capitalized_income_amortization_adjustment_transaction.xml" relativeToChangelogFile="true" />
+    <include file="parts/0182_transaction_summary_with_asset_owner_report_fix_charge_reason_and_add_buyback_intermediate.xml" relativeToChangelogFile="true" />
 </databaseChangeLog>

@@ -18,9 +18,10 @@
  */
 package org.apache.fineract.infrastructure.event.external.service.message.domain;
 
-import java.util.Objects;
 import lombok.Getter;
 import org.apache.fineract.avro.BulkMessagePayloadV1;
+
+import java.util.Objects;
 
 @Getter
 public class BulkMessageData {

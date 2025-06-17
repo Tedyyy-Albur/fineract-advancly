@@ -134,6 +134,9 @@ public class CommandSource extends AbstractPersistableCustom<Long> {
     @Column(name = "result_status_code")
     private Integer resultStatusCode;
 
+    @Column(name = "client_ip", nullable = true)
+    private String clientIp;
+
     @Column(name = "loan_external_id", length = 100)
     private ExternalId loanExternalId;
 
